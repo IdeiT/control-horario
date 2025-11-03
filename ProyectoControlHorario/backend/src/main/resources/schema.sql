@@ -1,0 +1,13 @@
+
+CREATE TABLE IF NOT EXISTS usuarios (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS fichajes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    usuario TEXT,
+    tipo TEXT,
+    fecha_hora TEXT
+);

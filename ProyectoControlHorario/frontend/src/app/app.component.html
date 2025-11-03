@@ -1,0 +1,30 @@
+<div class="container">
+  <h1>Control de Horario</h1>
+
+  <div *ngIf="!autenticado" class="login">
+    <input [(ngModel)]="usuario" placeholder="Usuario" />
+    <input [(ngModel)]="password" type="password" placeholder="Contraseña" />
+    <button (click)="login()">Iniciar sesión</button>
+  </div>
+
+  <div *ngIf="autenticado" class="panel">
+    <p>Bienvenido, {{ usuario }}</p>
+    <button (click)="fichar('entrada')">Fichar entrada</button>
+    <button (click)="fichar('salida')">Fichar salida</button>
+    <button (click)="salir()">Cerrar sesión</button>
+
+    <h3>Historial de fichajes</h3>
+    <table>
+      <thead>
+        <tr><th>Usuario</th><th>Tipo</th><th>Fecha y hora</th></tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let f of fichajes">
+          <td>{{ f.usuario }}</td>
+          <td>{{ f.tipo }}</td>
+          <td>{{ f.fecha_hora }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -1,0 +1,22 @@
+ No, no deberías guardar la contraseña en texto plano, ni en 
+SQLite, ni en MySQL, ni en PostgreSQL, ni en ninguna base de datos.
+ Da igual el tipo de base de datos — la contraseña siempre debe 
+guardarse de forma cifrada (en realidad, “hasheada”). En Java (con 
+Spring Boot), se usa normalmente BCrypt.
+
+
+  SQLite no es un servidor como PostgreSQL o MySQL, sino un fichero 
+en disco.
+  SQLite garantiza la integridad del fichero, pero no garantiza la 
+correcta ejecución concurrente de tus operaciones.
+
+
+  git push ->  Empujo mis cambios al servidor. Sube tus cambios locales 
+              al repositorio remoto (GitHub)
+
+  git pull ->  Traigo los cambios del servidor. Descarga los cambios del 
+              repositorio remoto (GitHub) a tu proyecto local.
+  
+  Antes de hacer un push, siempre conviene hacer un:
+    git pull
+  Así evitas conflictos si alguien más modificó el repositorio.
