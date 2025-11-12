@@ -1,0 +1,117 @@
+package com.proyecto.controlhorario.dao;
+
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import org.springframework.beans.factory.annotation.Value;
+
+import com.proyecto.controlhorario.dao.entity.Fichajes;
+import com.proyecto.controlhorario.db.DatabaseManager;
+import com.proyecto.controlhorario.dto.FichajeDto;
+import org.springframework.stereotype.Repository;
+import java.sql.*;
+
+@Repository
+public class FichajesDAO {
+    
+    @Value("${app.db.folder}")
+    private String dbFolder;
+
+
+    // =============================================================
+    // ✅ ENDPOINT: FICHAR ENTRADA / SALIDA 
+    // =============================================================
+    public String ficharUsuario(FichajeDto fichajeDto) {
+
+        Fichajes fichaje=new Fichajes();
+        String dbPath = dbFolder+"departamento_"+fichajeDto.getDepartamento().toLowerCase()+".db";
+        System.out.println("Ruta DB para fichaje: " + dbPath);
+
+        // ISO 8601  
+        // Todos los instantes de tiempo se guardan en 'UTC+00:00'
+        String ahoraUTC = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+
+        fichaje.setUsername(fichajeDto.getUsername());
+        fichaje.setInstante(ahoraUTC);
+
+        try {
+            DatabaseManager.withConnection(dbPath, conn -> {
+                // 1 - Obtener la última huella registrada
+                String ultimaHuella = null;
+                String queryUltima = "SELECT huella FROM fichajes ORDER BY id DESC LIMIT 1";
+                try (Statement st = conn.createStatement();
+                    ResultSet rs = st.executeQuery(queryUltima)) {
+                    if (rs.next()) {
+                        ultimaHuella = rs.getString("huella");
+                    }
+                }
+
+                // 2 - Ver si el ultimo fichaje fue de entrada o salida
+                String ultimoTipo = null;
+                String query = """ 
+                                    SELECT instante, tipo
+                                    FROM fichajes
+                                    WHERE username = ?
+                                    ORDER BY instante DESC
+                                    LIMIT 1; 
+                                """;
+                try (PreparedStatement st = conn.prepareStatement(query)) {
+                    st.setString(1, fichaje.getUsername());
+                    ResultSet rst = st.executeQuery();
+                    if (rst.next()) {
+                        ultimoTipo = rst.getString("tipo");
+                    }
+
+                    if(ultimoTipo == null || ultimoTipo.equals("SALE")) {
+                        fichaje.setTipo("ENTRA");
+                    } else {
+                        fichaje.setTipo("SALE");
+                    }               
+                }
+
+                // 2️⃣ Calcular la nueva huella
+                String base = fichaje.getUsername() + "|" + fichaje.getInstante() + "|" + fichaje.getTipo() + "|" + (ultimaHuella != null ? ultimaHuella : "GENESIS");
+                String nuevaHuella = generarHash(base);
+
+                // 3️⃣ Insertar el nuevo fichaje con su huella
+                String sql = "INSERT INTO fichajes (username, tipo, instante, huella) VALUES (?, ?, ?, ?)";
+                try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                    stmt.setString(1, fichaje.getUsername());
+                    stmt.setString(2, fichaje.getTipo());
+                    stmt.setString(3, fichaje.getInstante());
+                    stmt.setString(4, nuevaHuella);
+                    stmt.executeUpdate();
+                }
+            });
+
+            return "✅ Fichaje registrado correctamente en " + fichajeDto.getDepartamento();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return "⚠️ Error al registrar fichaje en " + fichajeDto.getDepartamento() + ": " + e.getMessage();
+        }
+    }
+
+    /**
+     * Genera un hash SHA-256 a partir de una cadena.
+     */
+    private String generarHash(String input) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hex = new StringBuilder();
+            for (byte b : hash) {
+                hex.append(String.format("%02x", b));
+            }
+            return hex.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Error al generar hash", e);
+        }
+    }
+
+}

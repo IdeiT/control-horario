@@ -22,7 +22,7 @@ public class JwtUtil {
     public static String generateToken(String username, String departamento, String rol) {
         return Jwts.builder()
                 .setSubject(username)
-                .addClaims(Map.of("departamento", departamento, "rol", rol))
+                .addClaims(Map.of("username", username, "departamento", departamento, "rol", rol))
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(SECRET_KEY)
