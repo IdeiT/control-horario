@@ -14,21 +14,16 @@ public class EdicionesDAO {
 
     public String solicitarEdicion(SolicitudFichajeDto solicitudFichajeDto) {
 
-        String dbPath = dbFolder+"control_general.db";
-
-        SolicitudEdicion solicitudEdicion=new SolicitudEdicion();
+        String dbPath = dbFolder+"departamento_"+solicitudFichajeDto.getDepartamento().toLowerCase()+".db";
         System.out.println("Ruta DB para solicitud de edición: " + dbPath);
 
-        solicitudEdicion.setUsername(solicitudFichajeDto.getUsername());
-        solicitudEdicion.setFecha(solicitudFichajeDto.getFecha());
-        solicitudEdicion.setHoraOriginal(solicitudFichajeDto.getHoraOriginal());
-        solicitudEdicion.setHoraSolicitada(solicitudFichajeDto.getHoraSolicitada());
-        solicitudEdicion.setMotivo(solicitudFichajeDto.getMotivo());
-        solicitudEdicion.setDepartamento(solicitudFichajeDto.getDepartamento());
+        SolicitudEdicion solicitudEdicion=new SolicitudEdicion();
+        solicitudEdicion.setNuevoInstante(solicitudFichajeDto.getNuevaFecha() + " " + solicitudFichajeDto.getNuevaHora());
+        solicitudEdicion.setTipo(solicitudFichajeDto.getTipo());
+        solicitudEdicion.rechazar();
 
 
-
-        return resultado;
+        return "funciona";
     }
 
 }
