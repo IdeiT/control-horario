@@ -9,7 +9,6 @@ import com.proyecto.controlhorario.security.JwtUtil;
 import com.proyecto.controlhorario.service.EdicionesService;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:4200")
 public class ControladorEdiciones {
 
     private final EdicionesService servicio;
