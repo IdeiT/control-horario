@@ -19,9 +19,9 @@ public class ControladorFichajes {
     }
 
 
-    // =============================================================
-    // ✅ ENDPOINT: FICHAR ENTRADA / SALIDA (usa formato dd/MM/yyyy HH:mm:ss)
-    // =============================================================
+    // ======================================
+    // ✅ ENDPOINT: FICHAR ENTRADA / SALIDA 
+    // ======================================
     @PostMapping("/fichar")
     public String fichar(@RequestHeader("Authorization") String authHeader) {
         try {

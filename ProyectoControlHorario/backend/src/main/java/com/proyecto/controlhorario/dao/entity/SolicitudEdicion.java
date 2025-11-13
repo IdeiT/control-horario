@@ -1,0 +1,48 @@
+package com.proyecto.controlhorario.dao.entity;
+
+public class SolicitudEdicion {
+    
+    private int id;
+    private int fichajeId;
+    private String nuevoInstante;
+    private String tipo;        // 'ENTRA' o 'SALE'
+    private String aprobado;    // 'VERDADERO' o 'FALSO'
+
+    // --- Constructores ---
+    public SolicitudEdicion(int fichajeId, String nuevoInstante, String tipo) {
+        this.fichajeId = fichajeId;
+        this.nuevoInstante = nuevoInstante;
+        this.tipo = tipo;
+        this.aprobado = "FALSO";
+    }
+
+    // --- Getters y Setters ---
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
+
+    public int getFichajeId() { return fichajeId; }
+    public void setFichajeId(int fichajeId) { this.fichajeId = fichajeId; }
+
+    public String getNuevoInstante() { return nuevoInstante; }
+    public void setNuevoInstante(String nuevoInstante) { this.nuevoInstante = nuevoInstante; }
+
+    public String getTipo() { return tipo; }
+    public void setTipo(String tipo) { this.tipo = tipo; }
+
+    public String getAprobado() { return aprobado; }
+    public void setAprobado(String aprobado) { this.aprobado = aprobado; }
+
+    // --- Métodos auxiliares ---
+    public boolean isAprobado() {
+        return "VERDADERO".equalsIgnoreCase(this.aprobado);
+    }
+
+    public void aprobar() {
+        this.aprobado = "VERDADERO";
+    }
+
+    public void rechazar() {
+        this.aprobado = "FALSO";
+    }
+
+}

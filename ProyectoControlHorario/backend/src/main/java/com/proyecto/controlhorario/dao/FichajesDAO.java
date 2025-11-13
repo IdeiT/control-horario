@@ -1,15 +1,12 @@
 package com.proyecto.controlhorario.dao;
 
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import org.springframework.beans.factory.annotation.Value;
-
 import com.proyecto.controlhorario.dao.entity.Fichajes;
 import com.proyecto.controlhorario.db.DatabaseManager;
 import com.proyecto.controlhorario.dto.FichajeDto;
@@ -17,17 +14,12 @@ import org.springframework.stereotype.Repository;
 import java.sql.*;
 
 @Repository
-public class FichajesDAO {
-    
+public class FichajesDAO { 
     @Value("${app.db.folder}")
     private String dbFolder;
 
 
-    // =============================================================
-    // ✅ ENDPOINT: FICHAR ENTRADA / SALIDA 
-    // =============================================================
     public String ficharUsuario(FichajeDto fichajeDto) {
-
         Fichajes fichaje=new Fichajes();
         String dbPath = dbFolder+"departamento_"+fichajeDto.getDepartamento().toLowerCase()+".db";
         System.out.println("Ruta DB para fichaje: " + dbPath);

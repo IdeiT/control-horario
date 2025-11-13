@@ -3,8 +3,6 @@ package com.proyecto.controlhorario.dao;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Repository;
-import jakarta.annotation.PostConstruct;
-
 import com.proyecto.controlhorario.dao.entity.Usuarios;
 import com.proyecto.controlhorario.db.DatabaseManager;
 import com.proyecto.controlhorario.dto.LoginDto;
@@ -17,19 +15,16 @@ public class UsuarioDAO {
     @Value("${app.db.folder}")
     private String dbFolder;
 
-    private String dbPath;
+    //   Clase de Spring Security que aplica el algoritmo BCrypt, un tipo de hash seguro diseñado para cifrar
+    //  contraseñas antes de guardarlas en la base de datos.
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
-    @PostConstruct
-    public void init() {
-        // Ahora dbFolder ya fue inyectado
-        dbPath = Paths.get(dbFolder, "control_general.db").toString();
-    }
-
-    // // =============================================================
+    // // ==========================
     // // ✅ REGISTAR NUEVO USUARIO
-    // // =============================================================
+    // // ==========================
     public String registrarUsuario(RegistroDto registroDto) {
+
+        String dbPath = dbFolder+"control_general.db";
         Usuarios usuario=new Usuarios(
             registroDto.getUsername(),
             registroDto.getPassword(),
@@ -86,9 +81,9 @@ public class UsuarioDAO {
 
 
 
-    // // =============================================================
+    // // ========================
     // // ✅ LOGIN CON TOKEN JWT
-    // // =============================================================
+    // // ========================
     public LoginDto loginUsuario(LoginDto dto) {
         String usuario = dto.getUsername();
         String password = dto.getPassword();

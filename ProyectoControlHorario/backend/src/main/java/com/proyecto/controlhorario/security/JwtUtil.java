@@ -11,6 +11,11 @@ import java.util.Map;
 public class JwtUtil {
 
     // 🔑 Clave secreta (puedes moverla a application.properties)
+    
+    //   En un entorno real, no debería generarse así cada vez, porque cambia cada vez que reinicias la aplicación.
+    //   En producción, la clave se guarda en un archivo de configuración (application.properties), por ejemplo:
+    //     jwt.secret=mi_clave_secreta_segura
+
     private static final Key SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
 
     // ⏳ Tiempo de expiración: 24 horas
