@@ -36,6 +36,13 @@
                 <p>Modifica un fichaje existente</p>
             </a>
             
+            <!-- Solo visible para admin/supervisor -->
+            <a href="verificar-integridad.html" class="dashboard-card" id="cardVerificar">
+                <span class="card-icon">🔐</span>
+                <h3>Verificar Integridad</h3>
+                <p>Comprobar cadena blockchain</p>
+            </a>
+            
             <a href="index.html" class="dashboard-card secondary" onclick="cerrarSesion()">
                 <span class="card-icon">🚪</span>
                 <h3>Salir</h3>
@@ -51,13 +58,27 @@
             window.location.href = 'login.html';
         }
         
-        // Mostrar nombre de usuario
+        // Obtener el token una sola vez
         const token = localStorage.getItem('authToken');
+        
         if (token) {
             try {
                 const payload = JSON.parse(atob(token.split('.')[1]));
+                
+                // Mostrar nombre de usuario
                 document.getElementById('navUser').textContent = `Usuario: ${payload.username || 'Desconocido'}`;
+                
+                // Ocultar la tarjeta de verificación si no es admin/supervisor
+                const rol = payload.rol;
+                if (rol !== 'administrador' && rol !== 'supervisor') {
+                    const cardVerificar = document.getElementById('cardVerificar');
+                    if (cardVerificar) {
+                        cardVerificar.style.display = 'none';
+                    }
+                }
+                
             } catch (e) {
+                console.error('Error al procesar token:', e);
                 document.getElementById('navUser').textContent = 'Usuario';
             }
         }

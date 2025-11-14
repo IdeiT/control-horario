@@ -411,3 +411,65 @@ tr:hover {
         gap: 10px;
     }
 }
+
+/* Detalles de Verificación */
+.detalles-verificacion {
+    margin-top: 30px;
+    display: none;
+}
+
+.card-exito, .card-error {
+    padding: 40px;
+    border-radius: 15px;
+    text-align: center;
+    margin-top: 20px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+}
+
+.card-exito {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    border: 3px solid #28a745;
+}
+
+.card-error {
+    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+    border: 3px solid #dc3545;
+}
+
+.icon-grande {
+    font-size: 5em;
+    margin-bottom: 20px;
+}
+
+.card-exito h2 {
+    color: #155724;
+    margin-bottom: 15px;
+}
+
+.card-error h2 {
+    color: #721c24;
+    margin-bottom: 15px;
+}
+
+.card-exito p, .card-error p {
+    font-size: 1.1em;
+    margin-bottom: 10px;
+}
+
+.card-exito ul, .card-error ul {
+    list-style: none;
+    padding: 0;
+}
+
+.card-exito li, .card-error li {
+    padding: 8px 0;
+    font-size: 1em;
+}
+
+.card-exito li {
+    color: #155724;
+}
+
+.card-error li {
+    color: #721c24;
+}

@@ -234,6 +234,101 @@ function cerrarSesion() {
     window.location.href = 'index.html';
 }
 
+
+// ============================================
+// FUNCIÓN: VERIFICAR INTEGRIDAD
+// ============================================
+async function verificarIntegridad(event) {
+    if (event) event.preventDefault();
+    
+    const authToken = localStorage.getItem('authToken');
+    
+    if (!authToken) {
+        mostrarRespuesta('verificarResponse', '⚠️ No estás autenticado', 'error');
+        setTimeout(() => window.location.href = 'login.html', 2000);
+        return;
+    }
+
+    const departamento = document.getElementById('departamento').value;
+
+    if (!departamento) {
+        mostrarRespuesta('verificarResponse', '⚠️ Por favor ingresa un departamento', 'error');
+        return;
+    }
+
+    // Mostrar loading
+    mostrarRespuesta('verificarResponse', '🔄 Verificando integridad, por favor espera...', 'success');
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/verificarIntegridadFichajes?departamento=${encodeURIComponent(departamento)}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        const data = await response.text();
+        
+        if (response.ok) {
+            if (data.includes('✅')) {
+                mostrarRespuesta('verificarResponse', data, 'success');
+                mostrarDetallesIntegridad(true, departamento);
+            } else if (data.includes('comprometida')) {
+                mostrarRespuesta('verificarResponse', data, 'error');
+                mostrarDetallesIntegridad(false, departamento);
+            } else {
+                mostrarRespuesta('verificarResponse', data, 'success');
+            }
+        } else {
+            mostrarRespuesta('verificarResponse', data, 'error');
+            if (data.includes('Token inválido o expirado')) {
+                cerrarSesion();
+            }
+        }
+    } catch (error) {
+        mostrarRespuesta('verificarResponse', '❌ Error de conexión: ' + error.message, 'error');
+    }
+}
+
+// ============================================
+// FUNCIÓN: MOSTRAR DETALLES DE VERIFICACIÓN
+// ============================================
+function mostrarDetallesIntegridad(integra, departamento) {
+    const container = document.getElementById('detallesVerificacion');
+    
+    if (!container) return;
+    
+    if (integra) {
+        container.innerHTML = `
+            <div class="card-exito">
+                <div class="icon-grande">✅</div>
+                <h2>¡Integridad Verificada!</h2>
+                <p>Todos los fichajes del departamento <strong>${departamento}</strong> son válidos.</p>
+                <ul style="text-align: left; margin-top: 20px;">
+                    <li>✓ Ningún registro ha sido modificado</li>
+                    <li>✓ La cadena de hashes es consistente</li>
+                    <li>✓ Todos los fichajes son auténticos</li>
+                </ul>
+            </div>
+        `;
+    } else {
+        container.innerHTML = `
+            <div class="card-error">
+                <div class="icon-grande">⚠️</div>
+                <h2>¡Integridad Comprometida!</h2>
+                <p>Se detectaron inconsistencias en el departamento <strong>${departamento}</strong>.</p>
+                <ul style="text-align: left; margin-top: 20px;">
+                    <li>⚠️ Uno o más registros fueron modificados</li>
+                    <li>⚠️ La cadena de hashes está rota</li>
+                    <li>⚠️ Contacta al administrador del sistema</li>
+                </ul>
+            </div>
+        `;
+    }
+    
+    container.style.display = 'block';
+}
+
 // ============================================
 // FUNCIONES AUXILIARES
 // ============================================

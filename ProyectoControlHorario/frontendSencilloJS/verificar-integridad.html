@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificar Integridad - Control Horario</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">🕐 Control Horario</div>
+        <a href="dashboard.html" class="btn btn-secondary btn-sm">← Volver al Dashboard</a>
+    </nav>
+    
+    <div class="container">
+        <div class="form-container" style="max-width: 700px;">
+            <h1>🔐 Verificar Integridad de Fichajes</h1>
+            <p class="subtitle">Comprueba que no se han modificado registros de forma fraudulenta</p>
+            
+            <div class="info-box" style="margin-bottom: 20px;">
+                <p><strong>ℹ️ Sistema Blockchain:</strong></p>
+                <p>Cada fichaje tiene un hash único que depende del fichaje anterior, formando una cadena. Si alguien modifica un registro, toda la cadena se invalida.</p>
+            </div>
+            
+            <form id="verificarForm" onsubmit="verificarIntegridad(event)">
+                <div class="form-group">
+                    <label for="departamento">Departamento a verificar</label>
+                    <input type="text" id="departamento" placeholder="Ej: ventas, IT, RRHH" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-block">
+                    🔍 Verificar Integridad
+                </button>
+            </form>
+            
+            <div id="verificarResponse" class="response"></div>
+            
+            <div id="detallesVerificacion" class="detalles-verificacion"></div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+    <script>
+        if (!verificarSesion()) {
+            window.location.href = 'login.html';
+        }
+        
+        // Verificar que el usuario tenga permisos de administrador
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                const rol = payload.rol;
+                
+                if (rol !== 'administrador' && rol !== 'supervisor') {
+                    alert('⚠️ No tienes permisos para acceder a esta funcionalidad');
+                    window.location.href = 'dashboard.html';
+                }
+            } catch (e) {
+                console.error('Error al verificar permisos:', e);
+            }
+        }
+    </script>
+</body>
+</html>
