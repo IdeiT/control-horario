@@ -1,11 +1,19 @@
 package com.proyecto.controlhorario.controllers;
 
 import com.proyecto.controlhorario.controllers.dto.LoginRequest;
+import com.proyecto.controlhorario.controllers.dto.LoginResponse;
 import com.proyecto.controlhorario.controllers.dto.RegistroRequest;
-import com.proyecto.controlhorario.dto.LoginDto;
-import com.proyecto.controlhorario.dto.RegistroDto;
+import com.proyecto.controlhorario.controllers.dto.RegistroResponse;
+import com.proyecto.controlhorario.exceptions.ForbiddenException;
+import com.proyecto.controlhorario.exceptions.UnauthorizedException;
+import com.proyecto.controlhorario.security.JwtUtil;
 import com.proyecto.controlhorario.service.*;
+
+import io.jsonwebtoken.JwtException;
 import jakarta.validation.Valid;
+
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,27 +34,41 @@ public class ControladorUsuario {
     // ✅ ENDPOINT: REGISTRAR NUEVO USUARIO 
     // ======================================
     @PostMapping("/registro")
-    public ResponseEntity<String> crearRegistro(@Valid @RequestBody RegistroRequest dto) {
+    public ResponseEntity<RegistroResponse> crearRegistro(@Valid @RequestBody RegistroRequest dto, @RequestHeader("Authorization") String authHeader) {
 
         try {
 
-            RegistroDto registro = new RegistroDto(
-                    dto.getUsername(),
-                    dto.getPassword(),
-                    dto.getDepartamento(),
-                    dto.getRol()
-            );  
+            //  Extraer el token (sin "Bearer ")
+            String token = authHeader.replace("Bearer ", "");
 
-            servicio.guardarRegistro(registro);
+            //  Validar token y obtener claims
+            Map<String, Object> claims = JwtUtil.validateToken(token);
+            String rolUsuarioActual = (String) claims.get("rol");
 
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body("✅ Registro guardado correctamente");
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("❌ Error: " + e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("❌ Error interno: " + e.getMessage());
+            //  Llamar al servicio (aquí se valida el rol)
+            RegistroResponse response = servicio.guardarRegistro(dto, rolUsuarioActual);
+            response.setMsg("Usuario registrado correctamente");
+
+            // En Spring Boot, la conversión a JSON es automática gracias a Jackson
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body(response);
+        }catch (JwtException e) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(new RegistroResponse("Error: " + e.getMessage()));
+        }catch (ForbiddenException e) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(new RegistroResponse("Error: " + e.getMessage()));  
+        }catch (IllegalArgumentException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new RegistroResponse("Error: " + e.getMessage()));      
+        }catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new RegistroResponse("Error interno: " + e.getMessage()));
         }
     }
 
@@ -56,25 +78,29 @@ public class ControladorUsuario {
     // ✅ LOGIN USUARIO 
     // =================
     @PostMapping("/login")
-    public ResponseEntity<String> loginUsuario(@Valid @RequestBody LoginRequest dto) {
+    public ResponseEntity<LoginResponse> loginUsuario(@Valid @RequestBody LoginRequest dto) {
 
         try {
 
-            LoginDto login = new LoginDto(
-                    dto.getUsername(),
-                    dto.getPassword()
-            );  
+            //  Llamar al servicio
+            LoginResponse response = servicio.solicitarLogin(dto);
 
-            LoginDto ldto=servicio.solicitarLogin(login);
-
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(ldto.getToken());
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("❌ Error: " + e.getMessage());
+            // En Spring Boot, la conversión a JSON es automática gracias a Jackson
+            return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(response);
+        } catch (UnauthorizedException e) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(new LoginResponse("Error: " + e.getMessage()));
+        }catch (IllegalArgumentException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new LoginResponse("Error: " + e.getMessage()));      
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("❌ Error interno: " + e.getMessage());
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new LoginResponse("Error interno: " + e.getMessage()));
         }
     }
 

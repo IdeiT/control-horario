@@ -3,10 +3,8 @@ package com.proyecto.controlhorario.dao;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Repository;
-import com.proyecto.controlhorario.dao.entity.Usuarios;
+import com.proyecto.controlhorario.dao.entity.Usuario;
 import com.proyecto.controlhorario.db.DatabaseManager;
-import com.proyecto.controlhorario.dto.LoginDto;
-import com.proyecto.controlhorario.dto.RegistroDto;
 import java.nio.file.Paths;
 import java.sql.*;
 
@@ -22,15 +20,9 @@ public class UsuarioDAO {
     // // ==========================
     // // ✅ REGISTAR NUEVO USUARIO
     // // ==========================
-    public String registrarUsuario(RegistroDto registroDto) {
+    public void registrarUsuario(Usuario usuario, int rolId) {
 
         String dbPath = dbFolder+"control_general.db";
-        Usuarios usuario=new Usuarios(
-            registroDto.getUsername(),
-            registroDto.getPassword(),
-            registroDto.getDepartamento(),
-            registroDto.getRol()
-        );
         
         try {   
             DatabaseManager.withConnection(dbPath, conn -> {
@@ -41,42 +33,78 @@ public class UsuarioDAO {
                     ResultSet rs = stmt.executeQuery();
                     if (rs.next()) {
                         departamentoId = rs.getInt("id");
-                    } else {
-                        throw new SQLException("Departamento no encontrado: " + usuario.getDepartamento());
-                    }
-                }
-
-                Integer rolId = null;
-                String sqlRol = "SELECT id FROM roles WHERE nombre = ?";
-                try (PreparedStatement stmt = conn.prepareStatement(sqlRol)) {
-                    stmt.setString(1, usuario.getRol());
-                    ResultSet rs = stmt.executeQuery();
-                    if (rs.next()) {
-                        rolId = rs.getInt("id");
-                    } else {
-                        throw new SQLException("Rol no encontrado: " + usuario.getRol());
-                    }
+                    } 
                 }
 
                 String sqlInsert = "INSERT INTO usuarios (username, password, departamento_id, rol_id) VALUES (?, ?, ?, ?)";
                 try (PreparedStatement stmt = conn.prepareStatement(sqlInsert)) {
                     stmt.setString(1, usuario.getUsername());
                     stmt.setString(2, encoder.encode(usuario.getPassword()));
+
+                    if (departamentoId != null) {
                     stmt.setInt(3, departamentoId);
+                    } else {
+                        stmt.setNull(3, Types.INTEGER); // permite NULL en la columna
+                    }
+
                     stmt.setInt(4, rolId);
                     stmt.executeUpdate();
                 }
             });
 
-            return "✅ Usuario '" + usuario.getUsername() + "' registrado correctamente.";
-
+           System.out.println("✅ Usuario '" + usuario.getUsername() + "' registrado correctamente.");
         } catch (SQLException e) {
-            if (e.getMessage().contains("UNIQUE constraint")) {
-                return "⚠️ El usuario '" + usuario.getUsername() + "' ya existe.";
-            }
             e.printStackTrace();
-            return "❌ Error al registrar usuario: " + e.getMessage();
+            System.out.println("❌ Error al registrar usuario: " + e.getMessage());
         }
+    }
+
+    // Devuelve true si el departamento ya existe en la BD
+    public boolean existsDepartamento(String departamento) {    
+        String dbPath = dbFolder+"control_general.db";
+        final boolean[] toret = {false};
+        
+        try {   
+            DatabaseManager.withConnection(dbPath, conn -> {
+                String sqlDept = "SELECT id FROM departamentos WHERE nombre = ?";
+                try (PreparedStatement stmt = conn.prepareStatement(sqlDept)) {
+                    stmt.setString(1, departamento);
+                    ResultSet rs = stmt.executeQuery();
+                    if (rs.next()) {
+                        toret[0] = true;
+                    }
+                }
+            });
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("❌ Error al registrar usuario: " + e.getMessage());
+        }   
+        return toret[0];
+    }
+
+
+    // Devuelve true si el username ya existe en la BD
+    public boolean existsByUsername(String username) {
+        String dbPath = dbFolder+"control_general.db";
+        final boolean[] toret = {false};
+        
+        try {   
+            DatabaseManager.withConnection(dbPath, conn -> {
+                String sqlDept = "SELECT id FROM usuarios WHERE username = ?";
+                try (PreparedStatement stmt = conn.prepareStatement(sqlDept)) {
+                    stmt.setString(1, username);
+                    ResultSet rs = stmt.executeQuery();
+                    if (rs.next()) {
+                        toret[0] = true;
+                    }
+                }
+            });
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("❌ Error al registrar usuario: " + e.getMessage());
+        }   
+        return toret[0];
+       
     }
 
 
@@ -84,12 +112,12 @@ public class UsuarioDAO {
     // // ========================
     // // ✅ LOGIN CON TOKEN JWT
     // // ========================
-    public LoginDto loginUsuario(LoginDto dto) {
-        String usuario = dto.getUsername();
-        String password = dto.getPassword();
-
+  
+    //    Una vez que ya hemos validado en la capa de Servicio que el username ya existe, procedemos a ver si la password es
+    //  correcta para devolver una entidad Usuario con toda la info necesaria para el JWT.
+    public Usuario existsPassword(String username, String password) {
         String dbPath = Paths.get(dbFolder, "control_general.db").toString();
-        final LoginDto toret = new LoginDto();
+        final Usuario toret = new Usuario();
 
         try {
             DatabaseManager.withConnection(dbPath, conn -> {
@@ -102,26 +130,25 @@ public class UsuarioDAO {
                 """;
 
                 try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-                    stmt.setString(1, usuario);
+                    stmt.setString(1, username);
                     ResultSet rs = stmt.executeQuery();
 
                     if (rs.next()) {
                         String hash = rs.getString("password");
-                        if (encoder.matches(password, hash)) {
+                        if (encoder.matches(password, hash)) {                           
                             String departamento = rs.getString("departamento");
                             String rol = rs.getString("rol");                       
 
                             // Devolvemos toda la info
-                            toret.setUsername(usuario);
+                            toret.setUsername(username);
                             toret.setDepartamento(departamento);
                             toret.setRol(rol);
     
                         } else {
-                            System.out.println(" Contraseña incorrecta para usuario: " + usuario);
+                            System.out.println(" Contraseña incorrecta para usuario: " + username);
+                            toret.setUsername(null);;
                         }
-                    } else {
-                        System.out.println(" Usuario no encontrado: " + usuario);
-                    }
+                    } 
                 }
             });
         } catch (SQLException e) {

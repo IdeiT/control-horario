@@ -3,6 +3,7 @@ package com.proyecto.controlhorario.db;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -26,6 +27,7 @@ public class DatabaseInitializer {
     private String dbFolder;
 
     private static final String GENERAL_DB_NAME = "control_general.db";
+    private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
     // Bases de datos por departamento
     private static final List<String> DEPARTAMENTOS = List.of(
@@ -117,8 +119,16 @@ public class DatabaseInitializer {
 
                     stmt.executeUpdate("""
                         INSERT OR IGNORE INTO roles (nombre)
-                        VALUES ('Administrador'), ('Empleado'), ('Supervisor');
+                        VALUES ('Administrador'), ('Auditor'), ('Supervisor'), ('Empleado');
                     """);
+
+                    String passw = "theBigBoss";
+                    String hashedPassw = encoder.encode(passw);
+
+                    stmt.executeUpdate(  // Insertando un administrador, porque sino no podre dar de alta a otros usuarios
+                        "INSERT OR IGNORE INTO usuarios (username, password, departamento_id, rol_id) " +
+                        "VALUES ('admin', '" + hashedPassw + "', NULL, 1)"
+                    );
 
                     System.out.println("🧩 Datos iniciales insertados en control_general.db");
                 }

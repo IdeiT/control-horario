@@ -3,6 +3,7 @@ package com.proyecto.controlhorario.controllers.dto;
 import jakarta.validation.constraints.NotBlank;
 
 public class LoginRequest {
+    // Request DTO (lo que llega del frontend)
 
     @NotBlank(message = "El nombre de usuario no puede estar vacío")
     private String username;

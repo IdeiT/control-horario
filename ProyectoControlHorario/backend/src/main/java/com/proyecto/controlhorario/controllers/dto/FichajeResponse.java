@@ -1,18 +1,40 @@
 package com.proyecto.controlhorario.controllers.dto;
 
+import com.proyecto.controlhorario.dao.entity.Fichaje;
 
 public class FichajeResponse {
+     // Response DTO (lo que devuelves al frontend)
 
     private String instante;
     private String tipo;
-    private String huella;
+    private String username;
+    private String departamento;
+    private String mensaje;
 
     public FichajeResponse() {}
 
-    public FichajeResponse(String instante, String tipo, String huella) {
+    public FichajeResponse(String msg) {   
+        this.mensaje = msg;
+    }
+
+    // Constructor desde Entity
+    public FichajeResponse(Fichaje fichaje) {   
+        this.instante = fichaje.getInstante();
+        this.tipo = fichaje.getTipo();
+        this.username = fichaje.getUsername();
+    }
+
+    public FichajeResponse(String instante, String tipo, String username) {
         this.instante = instante;
         this.tipo = tipo;
-        this.huella = huella;       
+        this.username = username;              
+    }
+
+    public FichajeResponse(String instante, String tipo, String username, String departamento) {
+        this.instante = instante;
+        this.tipo = tipo;
+        this.username = username;       
+        this.departamento = departamento;
     }
 
     public String getInstante() {
@@ -23,8 +45,8 @@ public class FichajeResponse {
         return tipo;
     } 
 
-    public String getHuella() {
-        return huella;
+    public String getUsername() {
+        return username;
     }
 
     public void setInstante(String instante) {
@@ -35,8 +57,21 @@ public class FichajeResponse {
         this.tipo = tipo;
     }
 
-    public void setHuella(String huella) {
-        this.huella = huella;
+    public void setUsername(String username) {
+        this.username = username;
     }
-    
+
+    public String getMensaje() {
+        return mensaje;
+    }
+
+    public void setMensaje(String mensaje) {
+        this.mensaje = mensaje;
+    }
+    public String getDepartamento() {
+        return departamento;
+    }
+    public void setDepartamento(String departamento) {
+        this.departamento = departamento;
+    }
 }

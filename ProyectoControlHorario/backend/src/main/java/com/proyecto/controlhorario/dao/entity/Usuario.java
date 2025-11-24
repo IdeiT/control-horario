@@ -1,13 +1,15 @@
-package com.proyecto.controlhorario.dto;
+package com.proyecto.controlhorario.dao.entity;
 
-public class RegistroDto {
-
+public class Usuario {
     private String username;
     private String password;
     private String departamento;
     private String rol;
 
-    public RegistroDto(String username, String password, String departamento, String rol) {
+    public Usuario () {
+    }
+
+    public Usuario(String username, String password, String departamento, String rol) {
         this.username = username;
         this.password = password;
         this.departamento = departamento;

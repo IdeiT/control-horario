@@ -1,9 +1,13 @@
 package com.proyecto.controlhorario.controllers;
 
 import com.proyecto.controlhorario.controllers.dto.FichajeResponse;
-import com.proyecto.controlhorario.dto.FichajeDto;
+import com.proyecto.controlhorario.controllers.dto.IntegridadResponse;
+import com.proyecto.controlhorario.controllers.dto.ListarFichajeUsuarioResponse;
+import com.proyecto.controlhorario.exceptions.ForbiddenException;
 import com.proyecto.controlhorario.security.JwtUtil;
 import com.proyecto.controlhorario.service.FichajesService;
+
+import io.jsonwebtoken.JwtException;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +29,7 @@ public class ControladorFichajes {
     // ✅ ENDPOINT: FICHAR ENTRADA / SALIDA 
     // ======================================
     @PostMapping("/fichar")
-    public String fichar(@RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<FichajeResponse> fichar(@RequestHeader("Authorization") String authHeader) {
         try {
             // 1️⃣ Extraer el token (sin "Bearer ")
             String token = authHeader.replace("Bearer ", "");
@@ -33,28 +37,42 @@ public class ControladorFichajes {
             // 2️⃣ Validar token y obtener claims
             Map<String, Object> claims = JwtUtil.validateToken(token);
             String username = (String) claims.get("username");
-            String departamento = (String) claims.get("departamento");
+            String departamento = (String) claims.get("departamento"); 
 
-            FichajeDto fichaje = new FichajeDto(username, departamento);  
-            System.out.println("Fichaje recibido: " + fichaje.getUsername() + ", " + fichaje.getDepartamento());
-            // 3️⃣ Registrar fichaje en la tabla correspondiente
-            servicio.ficharUsuario(fichaje);
+            // 3️⃣ Llamar al servicio para fichar
+            FichajeResponse response = servicio.ficharUsuario(username,departamento);;
+            response.setMensaje("Usuario ha fichado correctamente");
 
-            return "✅ Fichaje registrado correctamente para " + username
-                    + " en departamento " + departamento;
-        } catch (Exception e) {
-            e.printStackTrace();      
-            return "❌ Token inválido o expirado";
+            // En Spring Boot, la conversión a JSON es automática gracias a Jackson
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body(response);
+        }catch (JwtException e) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(new FichajeResponse("Error: " + e.getMessage()));
+        }catch (ForbiddenException e) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(new FichajeResponse("Error: " + e.getMessage()));  
+        }catch (IllegalArgumentException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new FichajeResponse("Error: " + e.getMessage()));      
+        }catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new FichajeResponse("Error interno: " + e.getMessage()));
         }
     }
 
  
 
     // // =============================================================
-    // // ✅ ENDPOINT: LISTAR FICHAJES
+    // // ✅ ENDPOINT: LISTAR FICHAJES del USUARIO
     // // =============================================================
-    @GetMapping("/listarFichajes")
-    public ResponseEntity<?> listarFichajes(@RequestHeader("Authorization") String authHeader) {
+    @GetMapping("/listarFichajesUsuario")
+    public ResponseEntity<?> listarFichajesUsuario(@RequestHeader("Authorization") String authHeader) {
        try {
             // 1️⃣ Extraer el token (sin "Bearer ")
             String token = authHeader.replace("Bearer ", "");
@@ -64,22 +82,30 @@ public class ControladorFichajes {
             String username = (String) claims.get("username");
             String departamento = (String) claims.get("departamento");
 
-            FichajeDto fichaje = new FichajeDto(username, departamento);  
 
             // 3️⃣ Listar todos fichajes del usuario correspondiente
-            List<FichajeDto> fichajes = servicio.listarFichajesUsuario(fichaje);
-            List<FichajeResponse> response = new ArrayList<>();
-            for (FichajeDto fich : fichajes) {
-                response.add(new FichajeResponse(fich.getInstante(), fich.getTipo(), fich.getHuella()));
-            }
+            List<ListarFichajeUsuarioResponse> response = servicio.listarFichajesUsuario(username,departamento);  
 
-            // Devolver JSON con la lista
-            return ResponseEntity.ok(response);    // En este caso devolveré un  List<FichajeResponse>
-        } catch (Exception e) {
-            e.printStackTrace();      
-            // Devolver mensaje de error en caso de token inválido
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                             .body("❌ Token inválido o expirado");
+            // En Spring Boot, la conversión a JSON es automática gracias a Jackson
+            return ResponseEntity
+                    .status(HttpStatus.OK)         // En este caso devolveré un  List<ListarFichajeUsuarioResponse>                                                                  
+                    .body(response);
+        } catch (JwtException e) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body("Error: " + e.getMessage());
+        }catch (ForbiddenException e) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body("Error: " + e.getMessage());
+        }catch (IllegalArgumentException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body("Error: " + e.getMessage());
+        }catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error interno: " + e.getMessage());
         }
     }
 
@@ -90,7 +116,7 @@ public class ControladorFichajes {
     // // ✅ ENDPOINT: VERIFICAR INTEGRIDAD DE FICHAJES
     // // =============================================================
     @GetMapping("/verificarIntegridadFichajes")
-    public String verificarIntegridadFichajes(@RequestHeader("Authorization") String authHeader, @RequestParam String departamento) {
+    public ResponseEntity<IntegridadResponse> verificarIntegridadFichajes(@RequestHeader("Authorization") String authHeader, @RequestParam String departamento) {
 
         try {
             // 1️⃣ Extraer el token (sin "Bearer ")
@@ -98,23 +124,38 @@ public class ControladorFichajes {
 
             // 2️⃣ Validar token y obtener claims
             Map<String, Object> claims = JwtUtil.validateToken(token);
-            String username = (String) claims.get("username");
 
-            //  Solo los roles de administrador y supervisor podran 
+            //  Solo los roles de administrador y auditor podran 
             // comprobar la integridad en las tablas de los departamentos
             String rol = (String) claims.get("rol");     
 
-            FichajeDto fichaje = new FichajeDto();  
-            fichaje.setUsername(username);
-            fichaje.setDepartamento(departamento);
-            fichaje.setRol(rol);
+        
 
-            return servicio.comprobarIntegridadFichajes(fichaje);
-        } catch (Exception e) {
-            e.printStackTrace();      
-            // Devolver mensaje de error en caso de token inválido
-            return ("❌ Token inválido o expirado");
-        } 
+            // 3️⃣ Llamar al servicio para comprobar integridad
+            IntegridadResponse response = servicio.comprobarIntegridadFichajes(departamento, rol);
+        
+
+            // En Spring Boot, la conversión a JSON es automática gracias a Jackson
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body(response);
+        } catch (JwtException e) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(new IntegridadResponse("Error: " + e.getMessage()));
+        }catch (ForbiddenException e) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(new IntegridadResponse("Error: " + e.getMessage()));
+        }catch (IllegalArgumentException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new IntegridadResponse("Error: " + e.getMessage()));
+        }catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new IntegridadResponse("Error interno: " + e.getMessage()));
+        }
     }
 
 

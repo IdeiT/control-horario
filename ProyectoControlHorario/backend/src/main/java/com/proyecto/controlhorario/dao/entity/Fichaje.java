@@ -1,7 +1,7 @@
 package com.proyecto.controlhorario.dao.entity;
 
 
-public class Fichajes {
+public class Fichaje {
 
     private String username;
     private String instante;
@@ -10,10 +10,10 @@ public class Fichajes {
     private Integer idEdicion;  // Puede ser nulo
 
 
-    public Fichajes() {
+    public Fichaje() {
     }
 
-    public Fichajes(String username, String instante, String tipo, String huella, Integer idEdicion) {
+    public Fichaje(String username, String instante, String tipo, String huella, Integer idEdicion) {
         this.username = username;
         this.instante = instante;
         this.tipo = tipo;

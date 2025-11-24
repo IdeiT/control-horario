@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public class RegistroRequest {
+    // Request DTO (lo que llega del frontend)
 
     @NotBlank(message = "El nombre de usuario no puede estar vacío")
     @Size(min = 3, max = 30, message = "El nombre de usuario debe tener entre 3 y 30 caracteres")
@@ -13,8 +14,8 @@ public class RegistroRequest {
     @Size(min = 8, message = "La contraseña debe tener al menos 8 caracteres")
     private String password;
 
-    @NotBlank(message = "El departamento no puede estar vacío")
-    private String departamento;
+   
+    private String departamento;  // El departamento puede ser NULL si el rol es 'Auditor'
 
     @NotBlank(message = "El rol no puede estar vacío")
     private String rol;

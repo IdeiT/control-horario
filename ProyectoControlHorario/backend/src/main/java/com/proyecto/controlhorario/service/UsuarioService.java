@@ -1,9 +1,16 @@
 package com.proyecto.controlhorario.service;
 
+import com.proyecto.controlhorario.controllers.dto.LoginRequest;
+import com.proyecto.controlhorario.controllers.dto.LoginResponse;
+import com.proyecto.controlhorario.controllers.dto.RegistroRequest;
+import com.proyecto.controlhorario.controllers.dto.RegistroResponse;
 import com.proyecto.controlhorario.dao.UsuarioDAO;
-import com.proyecto.controlhorario.dto.LoginDto;
-import com.proyecto.controlhorario.dto.RegistroDto;
+import com.proyecto.controlhorario.dao.entity.Usuario;
+import com.proyecto.controlhorario.exceptions.ForbiddenException;
+import com.proyecto.controlhorario.exceptions.UnauthorizedException;
 import com.proyecto.controlhorario.security.JwtUtil;
+
+import java.util.HashMap;
 
 import org.springframework.stereotype.Service;
 
@@ -16,18 +23,80 @@ public class UsuarioService {
         this.usuarioDAO = registroDAO;
     }
 
-    public void guardarRegistro(RegistroDto dto) {
-        System.out.println(usuarioDAO.registrarUsuario(dto));
+    public RegistroResponse guardarRegistro(RegistroRequest dto, String rolUsuarioActual) {
+
+        // Administrador -->   es el unico rol que puede crear nuevos usuarios, solo estara en la base de datos general, 
+        //                   puede comprobar integridad (departamento null).
+        //       Auditor -->  solo estara en la base de datos general, puede comprobar integridad (departamento null).
+        //    Supervisor -->  es el que da el OK de la edicion del fichaje.
+        //      Empleado -->  es el que ficha sin mas.
+
+        // ✅ VALIDAR QUE EL USUARIO ACTUAL SEA ADMINISTRADOR
+        if (!"Administrador".equals(rolUsuarioActual)) {
+            throw new ForbiddenException("Solo los administradores pueden crear usuarios");
+        }
+        
+        //  Validar que el username no exista
+        if (usuarioDAO.existsByUsername(dto.getUsername())) {
+            throw new IllegalArgumentException("El username ya está registrado");
+        }
+
+        HashMap<String, Integer> rolesHashMap = new HashMap<>();
+        rolesHashMap.put("Administrador", 1);
+        rolesHashMap.put("Auditor", 2);
+        rolesHashMap.put("Supervisor", 3);
+        rolesHashMap.put("Empleado", 4);
+
+        //  Validar que el rol sea válido
+        if (!rolesHashMap.containsKey(dto.getRol())) {
+            throw new IllegalArgumentException("El rol especificado no es válido");
+        }
+        //  Validar que el departamento sea válido (si el rol no es Auditor ni es Administrador)
+        if (!dto.getRol().equals("Auditor") && !dto.getRol().equals("Administrador")) {
+            if (!usuarioDAO.existsDepartamento(dto.getDepartamento())) {
+                throw new IllegalArgumentException("El departamento especificado no existe");
+            }
+        } else {
+            dto.setDepartamento(null);  // Los Auditores y Administradores no tienen departamento
+        }
+
+        
+        // Crear entidad Usuario desde el DTO
+        Usuario user = new Usuario();
+        user.setUsername(dto.getUsername());
+        user.setPassword(dto.getPassword());
+        user.setDepartamento(dto.getDepartamento());
+        user.setRol(dto.getRol());
+
+        // Guardar en la BD
+        usuarioDAO.registrarUsuario(user, rolesHashMap.get(dto.getRol()));
+        
+        return new RegistroResponse(user);
     }
+
+
     
-    public LoginDto solicitarLogin(LoginDto dto) {
+    public LoginResponse solicitarLogin(LoginRequest dto) {
+
+        //  Validar que el username ya existe
+        if (!usuarioDAO.existsByUsername(dto.getUsername())) {
+            throw new UnauthorizedException("El username no está registrado");
+        }
+
+        //  Validar que la password es correcta y obtener la entidad Usuario (devolvera un Usuario con username null si la password es incorrecta)
+        Usuario user = usuarioDAO.existsPassword(dto.getUsername(), dto.getPassword());
+ 
+        if(user.getUsername()==null){
+            throw new UnauthorizedException("Contraseña incorrecta");
+        }
 
         // ✅ Generar el token JWT
-        LoginDto loginResult = usuarioDAO.loginUsuario(dto);
-        String token = JwtUtil.generateToken(loginResult.getUsername(), loginResult.getDepartamento(), loginResult.getRol());
-        loginResult.setToken(token);
-        
-        return loginResult;
+        // No pasa nada si un claim del JWT es null
+        String token = JwtUtil.generateToken(user.getUsername(), user.getDepartamento(), user.getRol());
+        LoginResponse response = new LoginResponse(user.getUsername(), token, "Login exitoso");
+    
+
+        return response;  
     }
 
 }

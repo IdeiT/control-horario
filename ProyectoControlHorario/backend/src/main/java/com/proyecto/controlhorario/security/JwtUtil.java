@@ -6,6 +6,7 @@ import io.jsonwebtoken.security.Keys;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 public class JwtUtil {
@@ -17,6 +18,8 @@ public class JwtUtil {
     //     jwt.secret=mi_clave_secreta_segura
 
     private static final Key SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    // Esta línea genera una nueva clave secreta cada vez que se inicia la aplicación.
+    // Problema: todos los JWT generados antes de reiniciar la app dejarán de ser válidos
 
     // ⏳ Tiempo de expiración: 24 horas
     private static final long EXPIRATION_TIME = 1000 * 60 * 60 * 24;
@@ -25,9 +28,15 @@ public class JwtUtil {
      * Genera un token JWT con los datos del usuario.
      */
     public static String generateToken(String username, String departamento, String rol) {
+        
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("username", username);
+        claims.put("rol", rol);
+        claims.put("departamento", departamento);
+
         return Jwts.builder()
                 .setSubject(username)
-                .addClaims(Map.of("username", username, "departamento", departamento, "rol", rol))
+                .addClaims(claims)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(SECRET_KEY)
