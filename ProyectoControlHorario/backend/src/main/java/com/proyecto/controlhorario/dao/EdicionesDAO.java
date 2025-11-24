@@ -1,13 +1,16 @@
 package com.proyecto.controlhorario.dao;
 
-
+import java.beans.Statement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
-import com.proyecto.controlhorario.dto.SolicitudFichajeDto;
+
+import com.proyecto.controlhorario.controllers.dto.AprobarSolicitudResponse;
+import com.proyecto.controlhorario.controllers.dto.SolicitudEdicionResponse;
+import com.proyecto.controlhorario.dao.entity.Edicion;
 import com.proyecto.controlhorario.dao.entity.SolicitudEdicion;
 import com.proyecto.controlhorario.db.DatabaseManager;
 
@@ -17,51 +20,181 @@ public class EdicionesDAO {
     private String dbFolder;
 
 
-    public String solicitarEdicion(SolicitudFichajeDto solicitudFichajeDto) {
+    public SolicitudEdicionResponse solicitarEdicion(SolicitudEdicion solicitudEdicion, String departamento) {
 
-        String dbPath = dbFolder+"departamento_"+solicitudFichajeDto.getDepartamento().toLowerCase()+".db";
+        String dbPath = dbFolder+"departamento_"+departamento.toLowerCase()+".db";
         System.out.println("Ruta DB para solicitud de edición: " + dbPath);
-
-        SolicitudEdicion solicitudEdicion=new SolicitudEdicion();
-        solicitudEdicion.setNuevoInstante(solicitudFichajeDto.getNuevaFecha() + " " + solicitudFichajeDto.getNuevaHora());
-        solicitudEdicion.setTipo(solicitudFichajeDto.getTipo());
-        solicitudEdicion.rechazar();
+        final SolicitudEdicionResponse response = new SolicitudEdicionResponse(solicitudEdicion);
 
         try {
             DatabaseManager.withConnection(dbPath, conn -> {
-                // 1 - Obtener el 'fichaje-id' en la tabla fichajes del instante original
-                String idFichaje = null;
-                String query = """ 
-                                    SELECT id AS fichaje_id
-                                    FROM fichajes
-                                    WHERE username = ? AND instante = ?  ; 
-                                """;
-                try (PreparedStatement st = conn.prepareStatement(query)) {
-                    st.setString(1, solicitudFichajeDto.getUsername());
-                    st.setString(2, solicitudFichajeDto.getFecha() + " " + solicitudFichajeDto.getHora());
-                    ResultSet rst = st.executeQuery();
-                    if (rst.next()) {
-                        idFichaje = rst.getString("fichaje_id");
-                    }           
-                }
 
-                // 2️⃣ Insertar la solicitud de edición en la tabla 'solicitudes_edicion'
+                // Obtener el tipo y el instante que se pretende cambiar, del fichaje original para la solicitud
+                String tipoFichaje = null;
+                String instanteOriginal = null;
+                String queryTipo = "SELECT tipo, instante FROM fichajes WHERE id = ?";
+                try (PreparedStatement st = conn.prepareStatement(queryTipo)) {
+                    st.setInt(1, solicitudEdicion.getFichajeId());
+                    try (ResultSet rs = st.executeQuery()) {
+                        if (rs.next()) {
+                            tipoFichaje = rs.getString("tipo");
+                            instanteOriginal = rs.getString("instante");
+                        }
+                    }
+                }
+                solicitudEdicion.setTipo(tipoFichaje);  
+                
+                   
+
+                // Insertar la solicitud de edición en la tabla 'solicitudes_edicion'
                 String sql = "INSERT INTO solicitud_edicion (fichaje_id, nuevo_instante, tipo, aprobado) VALUES (?, ?, ?, ?)";
                 try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-                    stmt.setString(1, idFichaje);
+                    stmt.setInt(1, solicitudEdicion.getFichajeId());
                     stmt.setString(2, solicitudEdicion.getNuevoInstante());
                     stmt.setString(3, solicitudEdicion.getTipo());
                     stmt.setString(4, solicitudEdicion.getAprobado());
                     stmt.executeUpdate();
                 }
-            });
 
-            return "✅ Solicitud de edición registrada correctamente en " + solicitudFichajeDto.getDepartamento();
-
+                response.setTipo(tipoFichaje);
+                response.setViejoInstante(instanteOriginal);
+                
+            }); 
+   
+            System.out.println("✅ Solicitud de edición registrada correctamente en " + departamento);
+            
         } catch (SQLException e) {
             e.printStackTrace();
-            return "⚠️ Error al registrar solicitud de edición en " + solicitudFichajeDto.getDepartamento() + ": " + e.getMessage();
         }
+        return response;
+    }
+
+
+
+    // Metodo para dar el aprobado a la solicitud de edicion
+    // - Insertar la edicion en la tabla ediciones
+    public AprobarSolicitudResponse aprobarSolicitudEdicion(Edicion edicion, String departamento, int solicitudId) {
+        String dbPath = dbFolder+"departamento_"+departamento.toLowerCase()+".db";
+
+        try {
+            DatabaseManager.withConnection(dbPath, conn -> {
+                // Obtener huella del fichaje original en la tabla Fichajes
+                String huella_fichaje = null;
+                String query1 = "SELECT huella FROM fichajes WHERE id = ?";
+                try (PreparedStatement st = conn.prepareStatement(query1)) {
+                    st.setInt(1, edicion.getFichajeId());
+                    try (ResultSet rs = st.executeQuery()) {
+                        if (rs.next()) {
+                            huella_fichaje = rs.getString("huella");
+                        }
+                    }
+                }
+                edicion.setHuellaTablaFichaje(huella_fichaje);
+
+                 // - Calcular la nueva huella
+                //  Obtener la última huella registrada
+                //  Usamos 'id' en lugar de 'instante' para consistencia
+                String ultimaHuella = null;
+                String query2 = "SELECT huella FROM ediciones ORDER BY id DESC LIMIT 1";
+                try (PreparedStatement st = conn.prepareStatement(query2);
+                    ResultSet rs = st.executeQuery()) {
+                    if (rs.next()) {
+                        ultimaHuella = rs.getString("huella");
+                    }
+                }
+
+                String base = edicion.getFichajeId() + "|" + edicion.getNuevoInstante() + "|" + edicion.getTipo() + "|" + huella_fichaje + "|" + (ultimaHuella != null ? ultimaHuella : "GENESIS");
+                String nuevaHuella = FichajesDAO.generarHash(base);
+                edicion.setHuella(nuevaHuella);
+
+                // Insertando la edicion en la tabla 'ediciones'
+                int id_edicion;;
+                String sqlEdicion = "INSERT INTO ediciones (fichaje_id, instante, tipo, huella_fichaje, huella) VALUES (?, ?, ?, ?, ?)";
+                try (PreparedStatement stmtEdicion = conn.prepareStatement(sqlEdicion, PreparedStatement.RETURN_GENERATED_KEYS)) {
+                    stmtEdicion.setInt(1, edicion.getFichajeId());
+                    stmtEdicion.setString(2, edicion.getNuevoInstante());
+                    stmtEdicion.setString(3, edicion.getTipo());
+                    stmtEdicion.setString(4, huella_fichaje);
+                    stmtEdicion.setString(5, edicion.getHuella());
+                    stmtEdicion.executeUpdate();
+
+                    try (ResultSet generatedKeys = stmtEdicion.getGeneratedKeys()) {
+                        if (generatedKeys.next()) {
+                            id_edicion = generatedKeys.getInt(1);
+                        } else {
+                            throw new SQLException("No se pudo obtener el ID generado para la edición.");
+                        }
+                    }
+                }       
+
+                // Poniendo a verdadero el campo 'aprobado' en la tabla 'solicitud_edicion'
+                String sqlUpdateSolicitud = "UPDATE solicitud_edicion SET aprobado = 'VERDADERO' WHERE id = ? AND aprobado = 'FALSO'";
+                try (PreparedStatement stmtUpdate = conn.prepareStatement(sqlUpdateSolicitud)) {    
+                    stmtUpdate.setInt(1, solicitudId);
+                    int rowsUpdated = stmtUpdate.executeUpdate();
+                    if (rowsUpdated == 0) {
+                        throw new SQLException("No se encontró una solicitud pendiente para aprobar.");
+                    }
+                }
+
+                 // Actualizando el 'id_edicion' en la tabla 'fichajes'
+                String sqlUpdateFichaje = "UPDATE fichajes SET id_edicion = ? WHERE id = ?";
+                try (PreparedStatement stmtUpdate = conn.prepareStatement(sqlUpdateFichaje)) {    
+                    stmtUpdate.setInt(1, id_edicion);
+                    stmtUpdate.setInt(2, edicion.getFichajeId());
+                    int rowsUpdated = stmtUpdate.executeUpdate();
+                    if (rowsUpdated == 0) {
+                        throw new SQLException("No se encontró una solicitud pendiente para aprobar.");
+                    }
+                }
+                
+                
+            });
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+      return new AprobarSolicitudResponse(edicion);
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    // Metodo para copiar los campos necesarios de la solicitud de edicion a la entidad Edicion
+
+    // - fichajeId;
+    // - nuevoInstante;
+    // - tipo;      
+    public Edicion copiarCampos(Edicion edicion, String departamento, int solicitudId) throws IllegalArgumentException {
+        String dbPath = dbFolder+"departamento_"+departamento.toLowerCase()+".db";
+
+        try {
+            DatabaseManager.withConnection(dbPath, conn -> {
+                String query = "SELECT fichaje_id, nuevo_instante, tipo, aprobado FROM solicitud_edicion WHERE id = ?";
+                try (PreparedStatement st = conn.prepareStatement(query)) {
+                    String estado_aprobacion=null;
+                    st.setInt(1, solicitudId);
+                    try (ResultSet rs = st.executeQuery()) {
+                        if(!rs.next()) {
+                            throw new IllegalArgumentException("La solicitud no existe.");
+                        }
+                        else {
+                            estado_aprobacion = rs.getString("aprobado");
+                            if (!estado_aprobacion.equals("FALSO")) {
+                                throw new IllegalArgumentException("La solicitud ya ha sido procesada.");
+                            }
+                        }
+
+                        edicion.setFichajeId(rs.getInt("fichaje_id"));
+                        edicion.setNuevoInstante(rs.getString("nuevo_instante"));
+                        edicion.setTipo(rs.getString("tipo"));
+                    }            
+                }
+            });
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return edicion;
     }
 
 }

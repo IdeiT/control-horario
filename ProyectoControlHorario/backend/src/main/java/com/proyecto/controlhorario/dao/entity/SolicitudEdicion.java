@@ -1,8 +1,7 @@
 package com.proyecto.controlhorario.dao.entity;
 
 public class SolicitudEdicion {
-    
-    private int id;
+
     private int fichajeId;
     private String nuevoInstante;
     private String tipo;        // 'ENTRA' o 'SALE'
@@ -20,9 +19,6 @@ public class SolicitudEdicion {
     }
 
     // --- Getters y Setters ---
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
-
     public int getFichajeId() { return fichajeId; }
     public void setFichajeId(int fichajeId) { this.fichajeId = fichajeId; }
 

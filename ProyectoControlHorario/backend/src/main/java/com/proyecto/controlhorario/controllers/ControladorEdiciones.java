@@ -2,11 +2,19 @@ package com.proyecto.controlhorario.controllers;
 
 import java.util.Map;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import com.proyecto.controlhorario.controllers.dto.AprobarSolicitudResponse;
 import com.proyecto.controlhorario.controllers.dto.SolicitudEdicionRequest;
-import com.proyecto.controlhorario.dto.SolicitudFichajeDto;
+import com.proyecto.controlhorario.controllers.dto.SolicitudEdicionResponse;
+import com.proyecto.controlhorario.exceptions.ForbiddenException;
 import com.proyecto.controlhorario.security.JwtUtil;
 import com.proyecto.controlhorario.service.EdicionesService;
+
+import io.jsonwebtoken.JwtException;
+import jakarta.validation.Valid;
 
 @RestController
 public class ControladorEdiciones {
@@ -18,7 +26,7 @@ public class ControladorEdiciones {
     }
 
     @PostMapping("/solicitarEdicion")
-    public String editarFichaje(@RequestHeader("Authorization") String authHeader,@RequestBody SolicitudEdicionRequest dto) {
+    public ResponseEntity<SolicitudEdicionResponse> editarFichaje(@RequestHeader("Authorization") String authHeader,@Valid @RequestBody SolicitudEdicionRequest dto) {
 
         try {
             String token = authHeader.replace("Bearer ", "");
@@ -28,18 +36,74 @@ public class ControladorEdiciones {
             String departamento = (String) claims.get("departamento");
             String rol = (String) claims.get("rol");
 
-            SolicitudFichajeDto solicitudEdicion = new SolicitudFichajeDto(username, dto.getFecha(), dto.getNuevaFecha(),
-                                                                              dto.getHora(), dto.getNuevaHora(), dto.getTipo(),
-                                                                                  dto.getUsoHorario(), rol, departamento);  
+            //  Solo los roles de empleado y supervisor podran 
+            // solicitar una edicion de fichaje
             
             // 3️⃣ Registrar solicitud en la tabla correspondiente
-            servicio.solicitarEdicion(solicitudEdicion);
+            SolicitudEdicionResponse response = servicio.solicitarEdicion(dto,username,departamento,rol);
+            response.setMsg("Solicitud de edición registrada correctamente");
 
-            return "✅ Solicitud registrada correctamente para " + username
-                    + " en departamento " + departamento;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "❌ Token inválido o expirado";
+            // En Spring Boot, la conversión a JSON es automática gracias a Jackson
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body(response);
+        }catch (JwtException e) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(new SolicitudEdicionResponse("Error: " + e.getMessage()));
+        }catch (ForbiddenException e) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(new SolicitudEdicionResponse("Error: " + e.getMessage()));  
+        }catch (IllegalArgumentException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new SolicitudEdicionResponse("Error: " + e.getMessage()));      
+        }catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new SolicitudEdicionResponse("Error interno: " + e.getMessage()));
+        }
+    }
+
+
+    @PostMapping("/aprobarSolicitud")
+    public ResponseEntity<AprobarSolicitudResponse> aprobarSolicitud(@RequestHeader("Authorization") String authHeader,@Valid @RequestParam int solicitudId) {
+
+        try {
+            String token = authHeader.replace("Bearer ", "");
+            Map<String, Object> claims = JwtUtil.validateToken(token);
+
+            //  Solo el rol 'supervisor' podra aprobar la solicitud de edicion de fichaje
+            //  El supervisor es un empleado que pertenece al mismo departamento que el fichaje
+            String rol = (String) claims.get("rol");
+            String departamento = (String) claims.get("departamento");
+
+                   
+            // 3️⃣ Aprobar la solicitud en las tablas correspondientes
+            AprobarSolicitudResponse response = servicio.aprobarSolicitud(solicitudId, departamento, rol);
+            response.setMsg("Solicitud de edición aprobada correctamente");
+
+            // En Spring Boot, la conversión a JSON es automática gracias a Jackson
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body(response);
+        }catch (JwtException e) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(new AprobarSolicitudResponse("Error: " + e.getMessage()));
+        }catch (ForbiddenException e) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(new AprobarSolicitudResponse("Error: " + e.getMessage()));  
+        }catch (IllegalArgumentException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new AprobarSolicitudResponse("Error: " + e.getMessage()));      
+        }catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new AprobarSolicitudResponse("Error interno: " + e.getMessage()));
         }
     }
     

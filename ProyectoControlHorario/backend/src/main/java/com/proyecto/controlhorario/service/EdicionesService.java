@@ -2,8 +2,13 @@ package com.proyecto.controlhorario.service;
 
 import org.springframework.stereotype.Service;
 
+import com.proyecto.controlhorario.controllers.dto.AprobarSolicitudResponse;
+import com.proyecto.controlhorario.controllers.dto.SolicitudEdicionRequest;
+import com.proyecto.controlhorario.controllers.dto.SolicitudEdicionResponse;
 import com.proyecto.controlhorario.dao.EdicionesDAO;
-import com.proyecto.controlhorario.dto.SolicitudFichajeDto;
+import com.proyecto.controlhorario.dao.entity.Edicion;
+import com.proyecto.controlhorario.dao.entity.SolicitudEdicion;
+import com.proyecto.controlhorario.exceptions.ForbiddenException;
 
 @Service
 public class EdicionesService {
@@ -14,7 +19,43 @@ public class EdicionesService {
         this.solicitudEdicionDAO = solicitudEdicionDAO;
     }
 
-    public void solicitarEdicion(SolicitudFichajeDto dto) {
-        System.out.println(solicitudEdicionDAO.solicitarEdicion(dto));
+    public SolicitudEdicionResponse solicitarEdicion(SolicitudEdicionRequest dto, String username, String departamento, String rol) {
+
+        //  Solo los roles de empleado y supervisor podran 
+        // solicitar una edicion de fichaje
+        if (!rol.equals("Empleado") && !rol.equals("Supervisor")) {
+            throw new ForbiddenException("Solo los roles de EMPLEADO y SUPERVISOR pueden solicitar ediciones de fichajes");
+        }
+
+        // Crear entidad SolicitudEdicion desde el DTO
+        SolicitudEdicion solicitud = new SolicitudEdicion();
+        solicitud.setFichajeId(dto.getId_fichaje());
+        solicitud.setNuevoInstante(dto.getNuevoInstante());
+        solicitud.rechazar(); // Por defecto, la solicitud se marca como "rechazada"
+        // El tipo de la solicitud se deduce del fichaje original (ENTRA/SALE)
+     
+
+        SolicitudEdicionResponse response = solicitudEdicionDAO.solicitarEdicion(solicitud, departamento);
+        response.setUsername(username);
+
+        return response;
+    }
+
+
+    public AprobarSolicitudResponse aprobarSolicitud(int solicitudId, String departamento, String rol) {
+
+        //   Solo el rol 'supervisor' podra aprobar la solicitud de edicion de fichaje
+         //  El supervisor es un empleado que pertenece al mismo departamento que el fichaje
+        if (!rol.equals("Supervisor")) {
+            throw new ForbiddenException("Solo el rol de SUPERVISOR puede aprobar ediciones de fichajes");
+        }
+
+        // Crear entidad Edicion desde el DTO
+        // Copiar los campos necesarios de la solicitud de edicion ( fichajeId, nuevoInstante, tipo )
+        Edicion edicion =  solicitudEdicionDAO.copiarCampos(new Edicion(), departamento, solicitudId);
+         
+        AprobarSolicitudResponse response = solicitudEdicionDAO.aprobarSolicitudEdicion(edicion, departamento, solicitudId);
+        
+        return response;
     }
 }
