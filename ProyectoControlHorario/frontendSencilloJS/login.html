@@ -40,9 +40,14 @@
     
     <script src="script.js"></script>
     <script>
-        // Si el usuario ya está autenticado, redirigir al dashboard
-        if (verificarSesion()) {
-            window.location.href = 'dashboard.html';
+        // Este código se ejecuta DESPUÉS de cargar script.js
+        // Verificar si ya está autenticado
+        if (typeof verificarSesion === 'function') {
+            if (verificarSesion()) {
+                window.location.href = 'dashboard.html';
+            }
+        } else {
+            console.error('❌ Error: script.js no se cargó correctamente');
         }
     </script>
 </body>

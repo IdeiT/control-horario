@@ -52,6 +52,17 @@ function verificarRol(rolesPermitidos) {
 }
 
 // ============================================
+// FUNCIONES AUXILIARES
+// ============================================
+function mostrarRespuesta(elementId, mensaje, tipo) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.textContent = mensaje;
+        element.className = `response ${tipo}`;
+    }
+}
+
+// ============================================
 // FUNCIÓN: REGISTRAR USUARIO
 // ============================================
 async function registrarUsuario(event) {
@@ -75,7 +86,6 @@ async function registrarUsuario(event) {
         return;
     }
 
-    // Si el rol es Administrador o Auditor, el departamento debe estar vacío o ser null
     const departamentoFinal = (rol === 'administrador' || rol === 'auditor') ? '' : departamento;
 
     if ((rol === 'empleado' || rol === 'supervisor') && !departamentoFinal) {
@@ -120,7 +130,7 @@ async function registrarUsuario(event) {
 async function loginUsuario(event) {
     if (event) event.preventDefault();
     
-    console.log('🚀 Iniciando proceso de login...');
+    console.log('🚀 Iniciando login...');
     
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
@@ -133,7 +143,7 @@ async function loginUsuario(event) {
     }
 
     try {
-        console.log('📡 Enviando petición a:', `${API_BASE_URL}/general/login`);
+        console.log('📡 URL:', `${API_BASE_URL}/general/login`);
         
         const response = await fetch(`${API_BASE_URL}/general/login`, {
             method: 'POST',
@@ -154,15 +164,15 @@ async function loginUsuario(event) {
         let data;
         try {
             data = JSON.parse(textResponse);
-            console.log('✅ JSON parseado:', data);
+            console.log('✅ JSON:', data);
         } catch (e) {
-            console.error('❌ Error al parsear JSON:', e);
+            console.error('❌ Error parseando JSON:', e);
             mostrarRespuesta('loginResponse', '❌ Respuesta inválida del servidor', 'error');
             return;
         }
         
         if (response.ok) {
-            console.log('✅ Login exitoso');
+            console.log('✅ Login OK');
             console.log('🔑 Token:', data.token);
             
             if (data.token) {
@@ -174,7 +184,7 @@ async function loginUsuario(event) {
                     window.location.href = 'dashboard.html';
                 }, 1500);
             } else {
-                console.error('❌ No hay token en la respuesta');
+                console.error('❌ No hay token');
                 mostrarRespuesta('loginResponse', data.mensaje || 'Error: No se recibió el token', 'error');
             }
         } else {
@@ -366,7 +376,7 @@ async function listarSolicitudesPendientes() {
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/listarSolicitudesPendientes`, {
+        const response = await fetch(`${API_BASE_URL}/listarSolicitudes`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${authToken}`
@@ -375,15 +385,28 @@ async function listarSolicitudesPendientes() {
 
         if (response.ok) {
             const solicitudes = await response.json();
-            mostrarTablaSolicitudes(solicitudes);
+            
+            if (solicitudes && solicitudes.length > 0) {
+                mostrarRespuesta('solicitudesResponse', `✅ Se encontraron ${solicitudes.length} solicitudes pendientes`, 'success');
+                mostrarTablaSolicitudes(solicitudes);
+            } else {
+                mostrarRespuesta('solicitudesResponse', 'ℹ️ No hay solicitudes pendientes', 'success');
+                const tableContainer = document.getElementById('solicitudesTable');
+                if (tableContainer) {
+                    tableContainer.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No hay solicitudes pendientes en tu departamento</p>';
+                }
+            }
         } else {
             const data = await response.json();
-            mostrarRespuesta('solicitudesResponse', data.mensaje || 'Error al listar solicitudes', 'error');
+            mostrarRespuesta('solicitudesResponse', data.mensaje || data.msg || 'Error al listar solicitudes', 'error');
             if (response.status === 401) {
                 cerrarSesion();
+            } else if (response.status === 403) {
+                mostrarRespuesta('solicitudesResponse', '⚠️ No tienes permisos para ver las solicitudes (solo supervisores)', 'error');
             }
         }
     } catch (error) {
+        console.error('Error al listar solicitudes:', error);
         mostrarRespuesta('solicitudesResponse', '❌ Error de conexión: ' + error.message, 'error');
     }
 }
@@ -488,17 +511,8 @@ function mostrarDetallesIntegridad(integra, departamento) {
 }
 
 // ============================================
-// FUNCIONES AUXILIARES
+// FUNCIÓN: MOSTRAR TABLA DE FICHAJES
 // ============================================
-
-function mostrarRespuesta(elementId, mensaje, tipo) {
-    const element = document.getElementById(elementId);
-    if (element) {
-        element.textContent = mensaje;
-        element.className = `response ${tipo}`;
-    }
-}
-
 function mostrarTablaFichajes(fichajes) {
     const tableContainer = document.getElementById('fichajesTable');
     
@@ -540,6 +554,9 @@ function mostrarTablaFichajes(fichajes) {
     tableContainer.innerHTML = tableHTML;
 }
 
+// ============================================
+// FUNCIÓN: MOSTRAR TABLA DE SOLICITUDES (ACTUALIZADA PARA TU DTO)
+// ============================================
 function mostrarTablaSolicitudes(solicitudes) {
     const tableContainer = document.getElementById('solicitudesTable');
     
@@ -555,10 +572,9 @@ function mostrarTablaSolicitudes(solicitudes) {
             <thead>
                 <tr>
                     <th>ID Solicitud</th>
-                    <th>Usuario</th>
-                    <th>Fichaje Original</th>
-                    <th>Nueva Fecha/Hora</th>
-                    <th>Motivo</th>
+                    <th>Nuevo Instante</th>
+                    <th>Tipo</th>
+                    <th>Estado</th>
                     <th>Acción</th>
                 </tr>
             </thead>
@@ -566,25 +582,26 @@ function mostrarTablaSolicitudes(solicitudes) {
     `;
 
     solicitudes.forEach(sol => {
-        const id = sol.id || sol.solicitudId || '-';
-        const username = sol.username || sol.usuario || 'N/A';
-        const fichajeOriginal = sol.fichajeOriginal || sol.fichajeId || 'N/A';
-        const nuevaFecha = sol.nuevaFecha || 'N/A';
-        const nuevaHora = sol.nuevaHora || 'N/A';
-        const motivo = sol.motivo || 'Sin motivo';
+        const id = sol.id || '-';
+        const nuevoInstante = sol.nuevo_instante || 'N/A';
+        const tipo = sol.tipo || 'N/A';
+        const aprobado = sol.aprobado || 'NO';
+        
+        // Solo mostrar botón de aprobar si aún no está aprobado
+        const estaAprobado = aprobado === 'SI' || aprobado === 'si' || aprobado === 'YES' || aprobado === 'yes' || aprobado === 'true' || aprobado === true;
+        const botonAprobar = !estaAprobado
+            ? `<button class="btn btn-success btn-sm" onclick="aprobarSolicitud(${id})">✓ Aprobar</button>`
+            : `<span class="badge badge-success">✅ Aprobada</span>`;
+        
+        const estadoTexto = !estaAprobado ? '⏳ Pendiente' : '✅ Aprobada';
         
         tableHTML += `
             <tr>
                 <td>${id}</td>
-                <td>${username}</td>
-                <td>${fichajeOriginal}</td>
-                <td>${nuevaFecha} ${nuevaHora}</td>
-                <td>${motivo}</td>
-                <td>
-                    <button class="btn btn-success btn-sm" onclick="aprobarSolicitud(${id})">
-                        ✓ Aprobar
-                    </button>
-                </td>
+                <td>${nuevoInstante}</td>
+                <td><strong>${tipo}</strong></td>
+                <td>${estadoTexto}</td>
+                <td>${botonAprobar}</td>
             </tr>
         `;
     });

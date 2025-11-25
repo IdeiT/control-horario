@@ -2,6 +2,7 @@ com\proyecto\controlhorario\controllers\dto\SolicitudEdicionResponse.class
 com\proyecto\controlhorario\db\DatabaseManager$DatabaseOperation.class
 com\proyecto\controlhorario\controllers\dto\IntegridadResponse.class
 com\proyecto\controlhorario\dao\FichajesDAO.class
+com\proyecto\controlhorario\controllers\dto\ListarSolicitudesResponse.class
 com\proyecto\controlhorario\db\DatabaseInitializer.class
 com\proyecto\controlhorario\controllers\ControladorEdiciones.class
 com\proyecto\controlhorario\controllers\dto\RegistroRequest.class
