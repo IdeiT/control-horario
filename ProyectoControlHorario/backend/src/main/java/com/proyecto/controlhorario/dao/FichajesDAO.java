@@ -134,24 +134,25 @@ public class FichajesDAO {
                 String instante, tipo, nuevoInstante, nuevoTipo;
                 String query = """ 
                                     SELECT 
-                                        f.instante,
-                                        f.tipo,
-                                        e.id AS edicion_id,
-                                        e.instante AS edicion_instante,
-                                        e.tipo AS edicion_tipo,
-                                    FROM fichajes f
-                                    LEFT JOIN ediciones e ON f.id_edicion = e.id
-                                    WHERE username = ?
-                                    ORDER BY f.instante DESC;
+                                    f.instante AS instante_original,
+                                    f.tipo AS tipo_original,
+                                    e.instante AS edicion_instante,
+                                    e.tipo AS edicion_tipo
+                                FROM fichajes f
+                                LEFT JOIN ediciones e ON f.id_edicion = e.id
+                                WHERE f.username = ?
+                                ORDER BY instante_original DESC;
                                 """;
                 try (PreparedStatement st = conn.prepareStatement(query)) {
                     st.setString(1, username);
                     ResultSet rst = st.executeQuery();
                     while (rst.next()) {
-                        instante = rst.getString("f.instante");
-                        tipo = rst.getString("f.tipo");
-                        nuevoInstante = rst.getString("e.edicion_instante");
-                        nuevoTipo = rst.getString("e.edicion_tipo");
+                        instante = rst.getString("instante_original");
+                        tipo = rst.getString("tipo_original");
+
+                        // 'nuevoInstante' y 'nuevoTipo' solo existen si el fichaje fue editado (son los valores modificados)
+                        nuevoInstante = rst.getString("edicion_instante");
+                        nuevoTipo = rst.getString("edicion_tipo");
                         fichajesList.add(new ListarFichajeUsuarioResponse(instante, tipo, nuevoInstante, nuevoTipo));
                     }
                 }

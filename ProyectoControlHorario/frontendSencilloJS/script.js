@@ -39,8 +39,8 @@ function verificarRol(rolesPermitidos) {
         return false;
     }
     
-    const rolNormalizado = datos.rol.toLowerCase().trim();
-    const permitido = rolesPermitidos.map(r => r.toLowerCase()).includes(rolNormalizado);
+    const rolUsuario = datos.rol; // Sin normalizar
+    const permitido = rolesPermitidos.includes(rolUsuario);
     
     if (!permitido) {
         alert('⚠️ No tienes permisos para acceder a esta página');
@@ -57,13 +57,18 @@ function verificarRol(rolesPermitidos) {
 function mostrarRespuesta(elementId, mensaje, tipo) {
     const element = document.getElementById(elementId);
     if (element) {
-        element.textContent = mensaje;
-        element.className = `response ${tipo}`;
+        if (mensaje && mensaje.trim() !== '') {
+            element.textContent = mensaje;
+            element.className = `response ${tipo}`;
+            element.style.display = 'block';
+        } else {
+            element.style.display = 'none';
+        }
     }
 }
 
 // ============================================
-// FUNCIÓN: REGISTRAR USUARIO
+// FUNCIÓN: REGISTRAR USUARIO (CORREGIDA)
 // ============================================
 async function registrarUsuario(event) {
     if (event) event.preventDefault();
@@ -79,7 +84,7 @@ async function registrarUsuario(event) {
     const username = document.getElementById('regUsername').value;
     const password = document.getElementById('regPassword').value;
     const departamento = document.getElementById('regDepartamento').value;
-    const rol = document.getElementById('regRol').value;
+    const rol = document.getElementById('regRol').value.toLowerCase(); // ← Convertir a minúsculas
 
     if (!username || !password || !rol) {
         mostrarRespuesta('regResponse', '⚠️ Por favor completa todos los campos obligatorios', 'error');
@@ -92,6 +97,13 @@ async function registrarUsuario(event) {
         mostrarRespuesta('regResponse', '⚠️ Los empleados y supervisores deben tener un departamento', 'error');
         return;
     }
+
+    console.log('📤 Enviando registro:', {
+        username,
+        password: '***',
+        departamento: departamentoFinal,
+        rol
+    });
 
     try {
         const response = await fetch(`${API_BASE_URL}/general/registro`, {
@@ -372,7 +384,7 @@ async function aprobarSolicitud(solicitudId) {
 }
 
 // ============================================
-// FUNCIÓN: LISTAR SOLICITUDES PENDIENTES
+// FUNCIÓN: LISTAR SOLICITUDES PENDIENTES (SIN LÍNEA VERDE)
 // ============================================
 async function listarSolicitudesPendientes() {
     const authToken = localStorage.getItem('authToken');
@@ -395,13 +407,17 @@ async function listarSolicitudesPendientes() {
             const solicitudes = await response.json();
             
             if (solicitudes && solicitudes.length > 0) {
-                mostrarRespuesta('solicitudesResponse', `✅ Se encontraron ${solicitudes.length} solicitudes pendientes`, 'success');
+                // Ocultar el mensaje de respuesta
+                const responseElement = document.getElementById('solicitudesResponse');
+                if (responseElement) {
+                    responseElement.style.display = 'none';
+                }
                 mostrarTablaSolicitudes(solicitudes);
             } else {
-                mostrarRespuesta('solicitudesResponse', 'ℹ️ No hay solicitudes pendientes', 'success');
+                mostrarRespuesta('solicitudesResponse', 'ℹ️ No hay solicitudes en tu departamento', 'success');
                 const tableContainer = document.getElementById('solicitudesTable');
                 if (tableContainer) {
-                    tableContainer.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No hay solicitudes pendientes en tu departamento</p>';
+                    tableContainer.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No hay solicitudes en tu departamento</p>';
                 }
             }
         } else {
@@ -519,7 +535,7 @@ function mostrarDetallesIntegridad(integra, departamento) {
 }
 
 // ============================================
-// FUNCIÓN: MOSTRAR TABLA DE FICHAJES
+// FUNCIÓN: MOSTRAR TABLA DE FICHAJES (CORREGIDA)
 // ============================================
 function mostrarTablaFichajes(fichajes) {
     const tableContainer = document.getElementById('fichajesTable');
@@ -537,19 +553,62 @@ function mostrarTablaFichajes(fichajes) {
                 <tr>
                     <th>Fecha y Hora</th>
                     <th>Tipo</th>
+                    <th>Estado</th>
                 </tr>
             </thead>
             <tbody>
     `;
 
     fichajes.forEach(fichaje => {
-        const instante = fichaje.instante || fichaje.fechaHora || 'N/A';
-        const tipo = fichaje.tipo || 'N/A';
+        const instanteAnterior = fichaje.instanteAnterior || 'N/A';
+        const tipoAnterior = fichaje.tipoAnterior || 'N/A';
+        const nuevoInstante = fichaje.nuevoInstante;
+        const nuevoTipo = fichaje.nuevoTipo;
+        
+        // Verificar si el fichaje fue editado
+        const fueEditado = nuevoInstante && nuevoInstante !== null && nuevoInstante !== '';
+        
+        let celdaFechaHora = '';
+        let celdaTipo = '';
+        let celdaEstado = '';
+        
+        if (fueEditado) {
+            // Fichaje editado: mostrar valor original tachado y nuevo valor
+            celdaFechaHora = `
+                <div>
+                    <div style="color: #dc3545; text-decoration: line-through; font-size: 0.85em;">
+                        ${instanteAnterior}
+                    </div>
+                    <div style="color: #28a745; font-weight: bold;">
+                        ${nuevoInstante}
+                    </div>
+                </div>
+            `;
+            
+            celdaTipo = `
+                <div>
+                    <div style="color: #dc3545; text-decoration: line-through; font-size: 0.85em;">
+                        ${tipoAnterior}
+                    </div>
+                    <div style="color: #28a745; font-weight: bold;">
+                        ${nuevoTipo}
+                    </div>
+                </div>
+            `;
+            
+            celdaEstado = '<span style="background: #fff3cd; padding: 4px 8px; border-radius: 4px; color: #856404; font-size: 0.85em; font-weight: bold;">✏️ Editado</span>';
+        } else {
+            // Fichaje normal: sin ediciones (solo mostrar valores originales)
+            celdaFechaHora = instanteAnterior;
+            celdaTipo = `<strong>${tipoAnterior}</strong>`;
+            celdaEstado = '<span style="color: #6c757d; font-size: 0.85em;">📋 Original</span>';
+        }
         
         tableHTML += `
-            <tr>
-                <td>${instante}</td>
-                <td><strong>${tipo}</strong></td>
+            <tr style="${fueEditado ? 'background-color: #fffbf0; border-left: 3px solid #ffc107;' : ''}">
+                <td>${celdaFechaHora}</td>
+                <td>${celdaTipo}</td>
+                <td>${celdaEstado}</td>
             </tr>
         `;
     });

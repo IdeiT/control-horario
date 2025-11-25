@@ -43,7 +43,7 @@
         if (!verificarSesion()) {
             window.location.href = 'login.html';
         } else {
-            const verificado = verificarRol(['supervisor']);
+            const verificado = verificarRol(['Supervisor']);
             
             // Mostrar nombre de usuario
             const datos = obtenerDatosToken();

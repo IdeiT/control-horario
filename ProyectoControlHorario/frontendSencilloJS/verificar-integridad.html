@@ -52,7 +52,7 @@
         if (!verificarSesion()) {
             window.location.href = 'login.html';
         } else {
-            const verificado = verificarRol(['administrador', 'auditor']);
+            const verificado = verificarRol(['Administrador', 'Auditor']);
             
             // Mostrar nombre de usuario
             const datos = obtenerDatosToken();
