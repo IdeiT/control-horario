@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
 import com.proyecto.controlhorario.controllers.dto.AprobarSolicitudResponse;
-import com.proyecto.controlhorario.controllers.dto.ListarFichajeUsuarioResponse;
 import com.proyecto.controlhorario.controllers.dto.ListarSolicitudesResponse;
 import com.proyecto.controlhorario.controllers.dto.SolicitudEdicionResponse;
 import com.proyecto.controlhorario.dao.entity.Edicion;
@@ -30,6 +29,12 @@ public class EdicionesDAO {
 
         try {
             DatabaseManager.withConnection(dbPath, conn -> {
+
+                // Comprobar que ya existe un fichaje con ese id en la tabla Fichajes
+                boolean existeFichaje = existeFichajeId(solicitudEdicion.getFichajeId(), departamento);
+                if (!existeFichaje) {
+                    throw new IllegalArgumentException("No existe un fichaje con el id proporcionado en el departamento " + departamento);
+                }
 
                 // Obtener el tipo y el instante que se pretende cambiar, del fichaje original para la solicitud
                 String tipoFichaje = null;
@@ -69,6 +74,30 @@ public class EdicionesDAO {
             e.printStackTrace();
         }
         return response;
+    }
+
+    // Metodo para comprobar si existe un fichaje con el id proporcionado
+    private boolean existeFichajeId(int fichajeId, String departamento) {
+        String dbPath = dbFolder+"departamento_"+departamento.toLowerCase()+".db";
+        final boolean[] existe = {false};
+
+        try {
+            DatabaseManager.withConnection(dbPath, conn -> {
+                String query = "SELECT COUNT(*) AS count FROM fichajes WHERE id = ?";
+                try (PreparedStatement st = conn.prepareStatement(query)) {
+                    st.setInt(1, fichajeId);
+                    try (ResultSet rs = st.executeQuery()) {
+                        if (rs.next()) {
+                            int count = rs.getInt("count");
+                            existe[0] = (count > 0);
+                        }
+                    }
+                }
+            });
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return existe[0];
     }
 
 

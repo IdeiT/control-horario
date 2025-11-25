@@ -40,7 +40,7 @@
                     </select>
                 </div>
                 
-                <div class="form-group" id="departamentoGroup">
+                <div class="form-group" id="departamentoGroup" style="display: none;">
                     <label for="regDepartamento">Departamento *</label>
                     <select id="regDepartamento">
                         <option value="">Selecciona un departamento</option>
@@ -76,7 +76,7 @@
         if (!verificarSesion()) {
             window.location.href = 'login.html';
         } else {
-            const verificado = verificarRol(['administrador']);
+            verificarRol(['Administrador']);
             
             // Mostrar nombre de usuario
             const datos = obtenerDatosToken();
@@ -91,18 +91,24 @@
             const departamentoGroup = document.getElementById('departamentoGroup');
             const departamentoSelect = document.getElementById('regDepartamento');
             
-            if (rol === 'empleado' || rol === 'supervisor') {
+            console.log('🔄 toggleDepartamento ejecutado. Rol seleccionado:', rol);
+            
+            if (rol === 'Empleado' || rol === 'Supervisor') {
+                console.log('✅ Mostrando departamento');
                 departamentoGroup.style.display = 'block';
                 departamentoSelect.required = true;
             } else {
+                console.log('❌ Ocultando departamento');
                 departamentoGroup.style.display = 'none';
                 departamentoSelect.required = false;
                 departamentoSelect.value = '';
             }
         }
         
-        // Ocultar departamento inicialmente
-        toggleDepartamento();
+        // Ejecutar al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleDepartamento();
+        });
     </script>
 </body>
 </html>

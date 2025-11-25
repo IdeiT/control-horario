@@ -20,7 +20,7 @@ function obtenerDatosToken() {
         const payload = JSON.parse(atob(token.split('.')[1]));
         return {
             username: payload.username,
-            rol: payload.rol,
+            rol: payload.rol, // ← Sin normalizar, tal cual viene
             departamento: payload.departamento
         };
     } catch (e) {
@@ -39,7 +39,9 @@ function verificarRol(rolesPermitidos) {
         return false;
     }
     
-    const rolUsuario = datos.rol; // Sin normalizar
+    const rolUsuario = datos.rol; // "Administrador", "Empleado", etc.
+    
+    // Comparar directamente (sensible a mayúsculas)
     const permitido = rolesPermitidos.includes(rolUsuario);
     
     if (!permitido) {
@@ -84,7 +86,7 @@ async function registrarUsuario(event) {
     const username = document.getElementById('regUsername').value;
     const password = document.getElementById('regPassword').value;
     const departamento = document.getElementById('regDepartamento').value;
-    const rol = document.getElementById('regRol').value.toLowerCase(); // ← Convertir a minúsculas
+    const rol = document.getElementById('regRol').value; // ← Convertir a minúsculas
 
     if (!username || !password || !rol) {
         mostrarRespuesta('regResponse', '⚠️ Por favor completa todos los campos obligatorios', 'error');
