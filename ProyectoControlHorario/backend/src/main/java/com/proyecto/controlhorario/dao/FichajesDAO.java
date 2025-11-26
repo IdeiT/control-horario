@@ -172,7 +172,8 @@ public class FichajesDAO {
                             st2.setInt(1, idFichaje);
                             ResultSet rst2 = st2.executeQuery();
                             if (rst2.next()) {
-                                aprobado = rst2.getString("aprobado");                               
+                                aprobado = rst2.getString("aprobado");    
+                                // Aqui aprobado puede ser "VERDADERO", "FALSO" o null (si no existe solicitud de edicion)                           
                             }                           
                         }  
                        fichajesList.get(fichajesList.size()-1).setAprobadoEdicion(aprobado);                      
