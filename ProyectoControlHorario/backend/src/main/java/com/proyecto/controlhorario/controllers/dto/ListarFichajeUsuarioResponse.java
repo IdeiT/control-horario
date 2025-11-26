@@ -4,6 +4,7 @@ package com.proyecto.controlhorario.controllers.dto;
 public class ListarFichajeUsuarioResponse {
      // Response DTO (lo que devuelves al frontend)
 
+    private int idFichaje;
     private String instanteAnterior;
     private String tipoAnterior;
 
@@ -13,11 +14,20 @@ public class ListarFichajeUsuarioResponse {
 
     public ListarFichajeUsuarioResponse() {}
 
-    public ListarFichajeUsuarioResponse(String instanteAnterior, String tipoAnterior, String nuevoInstante, String nuevoTipo) {
+    public ListarFichajeUsuarioResponse(int idFichaje, String instanteAnterior, String tipoAnterior, String nuevoInstante, String nuevoTipo) {
+        this.idFichaje = idFichaje;
         this.instanteAnterior = instanteAnterior;
         this.tipoAnterior = tipoAnterior; 
         this.nuevoInstante = nuevoInstante;
         this.nuevoTipo = nuevoTipo;
+    }
+
+    public int getIdFichaje() {
+        return idFichaje;
+    }
+
+    public void setIdFichaje(int idFichaje) {
+        this.idFichaje = idFichaje;
     }
 
     public String getNuevoInstante() {

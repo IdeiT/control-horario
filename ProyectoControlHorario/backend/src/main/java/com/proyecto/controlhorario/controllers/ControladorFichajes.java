@@ -81,10 +81,11 @@ public class ControladorFichajes {
             Map<String, Object> claims = JwtUtil.validateToken(token);
             String username = (String) claims.get("username");
             String departamento = (String) claims.get("departamento");
+            String rolUsuarioActual = (String) claims.get("rol");
 
 
             // 3️⃣ Listar todos fichajes del usuario correspondiente
-            List<ListarFichajeUsuarioResponse> response = servicio.listarFichajesUsuario(username,departamento);  
+            List<ListarFichajeUsuarioResponse> response = servicio.listarFichajesUsuario(username,departamento,rolUsuarioActual);;  
 
             // En Spring Boot, la conversión a JSON es automática gracias a Jackson
             return ResponseEntity

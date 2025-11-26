@@ -132,8 +132,10 @@ public class FichajesDAO {
             DatabaseManager.withConnection(dbPath, conn -> {
                 // 1 - Listar todos los fichajes del usuario
                 String instante, tipo, nuevoInstante, nuevoTipo;
+                int idFichaje;
                 String query = """ 
                                     SELECT 
+                                    f.id AS id_fichaje,
                                     f.instante AS instante_original,
                                     f.tipo AS tipo_original,
                                     e.instante AS edicion_instante,
@@ -147,13 +149,14 @@ public class FichajesDAO {
                     st.setString(1, username);
                     ResultSet rst = st.executeQuery();
                     while (rst.next()) {
+                        idFichaje = rst.getInt("id_fichaje");
                         instante = rst.getString("instante_original");
                         tipo = rst.getString("tipo_original");
 
                         // 'nuevoInstante' y 'nuevoTipo' solo existen si el fichaje fue editado (son los valores modificados)
                         nuevoInstante = rst.getString("edicion_instante");
                         nuevoTipo = rst.getString("edicion_tipo");
-                        fichajesList.add(new ListarFichajeUsuarioResponse(instante, tipo, nuevoInstante, nuevoTipo));
+                        fichajesList.add(new ListarFichajeUsuarioResponse(idFichaje, instante, tipo, nuevoInstante, nuevoTipo));
                     }
                 }
             });
