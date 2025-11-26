@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<! DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -20,8 +20,13 @@
             
             <form onsubmit="verificarIntegridad(event)">
                 <div class="form-group">
-                    <label for="departamento">Departamento a Verificar</label>
-                    <input type="text" id="departamento" placeholder="Ingresa el nombre del departamento" required>
+                    <label for="departamento">Departamento a Verificar *</label>
+                    <select id="departamento" required>
+                        <option value="">Selecciona un departamento</option>
+                        <option value="IT">IT</option>
+                        <option value="RRHH">RRHH</option>
+                        <option value="Finanzas">Finanzas</option>
+                    </select>
                 </div>
                 
                 <button type="submit" class="btn btn-primary">🔍 Verificar Integridad</button>
@@ -31,14 +36,14 @@
             
             <div id="detallesVerificacion" style="margin-top: 30px;"></div>
             
-            <div style="margin-top: 30px; padding: 15px; background-color: #f0f0f0; border-radius: 8px;">
+            <div style="margin-top: 30px; padding: 15px; background-color: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196F3;">
                 <strong>ℹ️ ¿Qué es la verificación de integridad?</strong>
-                <p style="margin-top: 10px;">
+                <p style="margin-top: 10px; color: #555;">
                     El sistema utiliza una cadena de hashes (blockchain) para garantizar que ningún 
                     fichaje haya sido modificado de forma fraudulenta. Cada fichaje contiene un hash 
                     que depende del fichaje anterior, creando una cadena inmutable.
                 </p>
-                <ul style="margin-top: 10px; padding-left: 20px;">
+                <ul style="margin-top: 10px; padding-left: 20px; color: #555;">
                     <li>✅ <strong>Integridad OK:</strong> Todos los registros son auténticos</li>
                     <li>⚠️ <strong>Integridad Comprometida:</strong> Se detectaron modificaciones no autorizadas</li>
                 </ul>
@@ -52,12 +57,12 @@
         if (!verificarSesion()) {
             window.location.href = 'login.html';
         } else {
-            const verificado = verificarRol(['Administrador', 'Auditor']);
+            verificarRol(['Administrador', 'Auditor']);
             
             // Mostrar nombre de usuario
             const datos = obtenerDatosToken();
             if (datos) {
-                document.getElementById('navUser').textContent = `${datos.username} (${datos.rol})`;
+                document. getElementById('navUser').textContent = `${datos.username} (${datos.rol})`;
             }
         }
     </script>

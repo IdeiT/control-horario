@@ -446,7 +446,7 @@ function cerrarSesion() {
 }
 
 // ============================================
-// FUNCIÓN: VERIFICAR INTEGRIDAD
+// FUNCIÓN: VERIFICAR INTEGRIDAD (MEJORADA)
 // ============================================
 async function verificarIntegridad(event) {
     if (event) event.preventDefault();
@@ -466,7 +466,7 @@ async function verificarIntegridad(event) {
         return;
     }
 
-    mostrarRespuesta('verificarResponse', '🔄 Verificando integridad, por favor espera...', 'success');
+    mostrarRespuesta('verificarResponse', '🔄 Verificando integridad, por favor espera... ', 'success');
 
     try {
         const response = await fetch(`${API_BASE_URL}/verificarIntegridadFichajes?departamento=${encodeURIComponent(departamento)}`, {
@@ -478,23 +478,180 @@ async function verificarIntegridad(event) {
 
         const data = await response.json();
         
+        console.log('📦 Respuesta de verificación:', data);
+        
         if (response.ok) {
-            if (data.integra) {
-                mostrarRespuesta('verificarResponse', '✅ La integridad de los fichajes es correcta', 'success');
-                mostrarDetallesIntegridad(true, departamento);
-            } else {
-                mostrarRespuesta('verificarResponse', '⚠️ La integridad de los fichajes está comprometida', 'error');
-                mostrarDetallesIntegridad(false, departamento);
+            // Ocultar el mensaje de respuesta para mostrar solo la tabla
+            const responseElement = document.getElementById('verificarResponse');
+            if (responseElement) {
+                responseElement. style.display = 'none';
             }
+            
+            // Mostrar la tabla con los detalles de cada fichaje
+            mostrarTablaIntegridad(data.fichajes || data, departamento);
         } else {
-            mostrarRespuesta('verificarResponse', data.mensaje || 'Error al verificar integridad', 'error');
+            mostrarRespuesta('verificarResponse', data.mensaje || data.msg || 'Error al verificar integridad', 'error');
             if (response.status === 401) {
                 cerrarSesion();
             }
         }
     } catch (error) {
+        console.error('Error al verificar integridad:', error);
         mostrarRespuesta('verificarResponse', '❌ Error de conexión: ' + error.message, 'error');
     }
+}
+
+// ============================================
+// FUNCIÓN: MOSTRAR TABLA DE INTEGRIDAD (ORDENADA POR ID)
+// ============================================
+function mostrarTablaIntegridad(fichajes, departamento) {
+    const container = document.getElementById('detallesVerificacion');
+    
+    if (! container) return;
+    
+    if (! fichajes || fichajes.length === 0) {
+        container. innerHTML = `
+            <div style="padding: 20px; text-align: center; color: #666;">
+                <p>No hay fichajes en el departamento <strong>${departamento}</strong></p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Ordenar fichajes por ID descendente (más alto primero)
+    const fichajesOrdenados = [... fichajes].sort((a, b) => {
+        return (b.id || 0) - (a.id || 0);
+    });
+    
+    // Contar fichajes corruptos y válidos
+    let corruptos = 0;
+    let validos = 0;
+    
+    fichajesOrdenados.forEach(f => {
+        const mensaje = (f.mensaje || f.estado || '').toUpperCase();
+        
+        if (mensaje.includes('INCONSISTENCIA') || 
+            mensaje.includes('CORRUPTO') || 
+            mensaje. includes('COMPROMETID') ||
+            mensaje.includes('INVÁLIDO') ||
+            mensaje. includes('ERROR') ||
+            mensaje.includes('DETECTADA')) {
+            corruptos++;
+        } else {
+            validos++;
+        }
+    });
+    
+    const totalFichajes = fichajesOrdenados.length;
+    const integridadOK = corruptos === 0;
+    
+    let headerHTML = '';
+    if (integridadOK) {
+        headerHTML = `
+            <div style="background: #d4edda; border: 2px solid #28a745; border-radius: 8px; padding: 20px; margin-bottom: 20px; text-align: center;">
+                <div style="font-size: 3em; margin-bottom: 10px;">✅</div>
+                <h2 style="color: #155724; margin: 0;">¡Integridad Verificada!</h2>
+                <p style="color: #155724; margin-top: 10px;">
+                    Todos los <strong>${totalFichajes}</strong> fichajes del departamento 
+                    <strong>${departamento}</strong> son válidos y auténticos.
+                </p>
+            </div>
+        `;
+    } else {
+        headerHTML = `
+            <div style="background: #f8d7da; border: 2px solid #dc3545; border-radius: 8px; padding: 20px; margin-bottom: 20px; text-align: center;">
+                <div style="font-size: 3em; margin-bottom: 10px;">⚠️</div>
+                <h2 style="color: #721c24; margin: 0;">¡Integridad Comprometida!</h2>
+                <p style="color: #721c24; margin-top: 10px;">
+                    Se detectaron <strong>${corruptos}</strong> fichaje(s) con inconsistencias de un total de 
+                    <strong>${totalFichajes}</strong> en el departamento <strong>${departamento}</strong>.
+                </p>
+            </div>
+        `;
+    }
+    
+    let tableHTML = `
+        ${headerHTML}
+        <h3 style="margin-bottom: 15px;">📊 Detalle de Fichajes (ordenados por ID):</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Usuario</th>
+                    <th>Fecha y Hora</th>
+                    <th>Tipo</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    fichajesOrdenados.forEach(fichaje => {
+        const id = fichaje.id || '-';
+        const username = fichaje.username || fichaje.usuario || 'N/A';
+        const instante = fichaje.instante || fichaje.fecha || 'N/A';
+        const tipo = fichaje.tipo || 'N/A';
+        const mensaje = fichaje.mensaje || fichaje.estado || 'Estado desconocido';
+        
+        // Determinar si está corrupto
+        const mensajeUpper = mensaje.toUpperCase();
+        const esCorrupto = mensajeUpper.includes('INCONSISTENCIA') || 
+                          mensajeUpper.includes('CORRUPTO') || 
+                          mensajeUpper.includes('COMPROMETID') ||
+                          mensajeUpper. includes('INVÁLIDO') ||
+                          mensajeUpper.includes('ERROR') ||
+                          mensajeUpper.includes('DETECTADA');
+        
+        const estadoHTML = esCorrupto 
+            ? `<span style="background: #f8d7da; color: #721c24; padding: 6px 12px; border-radius: 4px; font-weight: bold; display: inline-block;">⚠️ ${mensaje}</span>`
+            : `<span style="background: #d4edda; color: #155724; padding: 6px 12px; border-radius: 4px; font-weight: bold; display: inline-block;">✅ ${mensaje}</span>`;
+        
+        const estiloFila = esCorrupto 
+            ? 'style="background-color: #fff5f5; border-left: 4px solid #dc3545;"'
+            : '';
+        
+        tableHTML += `
+            <tr ${estiloFila}>
+                <td><strong>${id}</strong></td>
+                <td>${username}</td>
+                <td>${instante}</td>
+                <td><strong>${tipo}</strong></td>
+                <td>${estadoHTML}</td>
+            </tr>
+        `;
+    });
+    
+    tableHTML += `
+            </tbody>
+        </table>
+    `;
+    
+    // Agregar resumen al final
+    const porcentajeValidos = totalFichajes > 0 ? ((validos / totalFichajes) * 100).toFixed(1) : 0;
+    const porcentajeCorruptos = totalFichajes > 0 ?  ((corruptos / totalFichajes) * 100).toFixed(1) : 0;
+    
+    tableHTML += `
+        <div style="margin-top: 20px; padding: 20px; background-color: ${integridadOK ? '#e7f3ff' : '#fff3cd'}; border-radius: 8px; border-left: 4px solid ${integridadOK ? '#2196F3' : '#ffc107'};">
+            <strong>📈 Resumen de Verificación:</strong>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+                <div>
+                    <div style="font-size: 0.9em; color: #666;">Fichajes válidos</div>
+                    <div style="font-size: 1. 5em; font-weight: bold; color: #28a745;">✅ ${validos} (${porcentajeValidos}%)</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.9em; color: #666;">Fichajes con inconsistencias</div>
+                    <div style="font-size: 1.5em; font-weight: bold; color: #dc3545;">⚠️ ${corruptos} (${porcentajeCorruptos}%)</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.9em; color: #666;">Total de fichajes</div>
+                    <div style="font-size: 1.5em; font-weight: bold; color: #333;">📊 ${totalFichajes}</div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML = tableHTML;
+    container.style.display = 'block';
 }
 
 // ============================================
