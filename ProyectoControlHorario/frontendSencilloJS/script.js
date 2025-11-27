@@ -805,7 +805,7 @@ function mostrarTablaSolicitudes(solicitudes) {
     
     if (!tableContainer) return;
     
-    if (!solicitudes || solicitudes.length === 0) {
+    if (! solicitudes || solicitudes.length === 0) {
         tableContainer.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No hay solicitudes pendientes</p>';
         return;
     }
@@ -815,6 +815,7 @@ function mostrarTablaSolicitudes(solicitudes) {
             <thead>
                 <tr>
                     <th>ID Solicitud</th>
+                    <th>Usuario</th>
                     <th>Nuevo Instante</th>
                     <th>Tipo</th>
                     <th>Estado</th>
@@ -824,10 +825,11 @@ function mostrarTablaSolicitudes(solicitudes) {
             <tbody>
     `;
 
-    solicitudes.forEach(sol => {
+    solicitudes. forEach(sol => {
         const id = sol.id || '-';
-        const nuevoInstante = sol.nuevo_instante || 'N/A';
-        const tipo = sol.tipo || 'N/A';
+        const username = sol.username || sol.usuario || 'N/A';  // ← NUEVO CAMPO
+        const nuevoInstante = sol.nuevo_instante || sol.nuevoInstante || 'N/A';
+        const tipo = sol. tipo || 'N/A';
         const aprobado = sol.aprobado;
         
         let estaAprobado = false;
@@ -858,6 +860,7 @@ function mostrarTablaSolicitudes(solicitudes) {
         tableHTML += `
             <tr ${estiloFila}>
                 <td>${id}</td>
+                <td><strong style="color: #495057;">${username}</strong></td>
                 <td>${nuevoInstante}</td>
                 <td><strong>${tipo}</strong></td>
                 <td>${estadoTexto}</td>
