@@ -238,8 +238,8 @@ public class EdicionesDAO {
             DatabaseManager.withConnection(dbPath, conn -> {
                 // 1 - Listar todos las solicitudes de edicion
                 String query = """ 
-                                    SELECT id, fichaje_id, nuevo_instante, tipo, aprobado
-                                    FROM solicitud_edicion
+                                    SELECT id, username, nuevo_instante, tipo, aprobado
+                                    FROM solicitud_edicion LEFT JOIN fichajes ON solicitud_edicion.fichaje_id = fichajes.id
                                     ORDER BY id DESC ; 
                                 """;
                 try (PreparedStatement st = conn.prepareStatement(query)) {
@@ -247,6 +247,7 @@ public class EdicionesDAO {
                     while (rst.next()) {
                         solicitudesList.add(new ListarSolicitudesResponse(
                             rst.getInt("id"),
+                            rst.getString("username"),
                             rst.getString("nuevo_instante"),
                             rst.getString("tipo"),
                             rst.getString("aprobado")

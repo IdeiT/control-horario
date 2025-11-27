@@ -20,7 +20,7 @@ function obtenerDatosToken() {
         const payload = JSON.parse(atob(token.split('.')[1]));
         return {
             username: payload.username,
-            rol: payload.rol,
+            rol: payload.rol, // ← Sin normalizar, tal cual viene
             departamento: payload.departamento
         };
     } catch (e) {
@@ -39,7 +39,9 @@ function verificarRol(rolesPermitidos) {
         return false;
     }
     
-    const rolUsuario = datos.rol;
+    const rolUsuario = datos.rol; // "Administrador", "Empleado", etc.
+    
+    // Comparar directamente (sensible a mayúsculas)
     const permitido = rolesPermitidos.includes(rolUsuario);
     
     if (!permitido) {
@@ -59,16 +61,16 @@ function mostrarRespuesta(elementId, mensaje, tipo) {
     if (element) {
         if (mensaje && mensaje.trim() !== '') {
             element.textContent = mensaje;
-            element. className = `response ${tipo}`;
+            element.className = `response ${tipo}`;
             element.style.display = 'block';
         } else {
-            element. style.display = 'none';
+            element.style.display = 'none';
         }
     }
 }
 
 // ============================================
-// FUNCIÓN: REGISTRAR USUARIO
+// FUNCIÓN: REGISTRAR USUARIO (CORREGIDA)
 // ============================================
 async function registrarUsuario(event) {
     if (event) event.preventDefault();
@@ -82,9 +84,9 @@ async function registrarUsuario(event) {
     }
     
     const username = document.getElementById('regUsername').value;
-    const password = document.getElementById('regPassword'). value;
+    const password = document.getElementById('regPassword').value;
     const departamento = document.getElementById('regDepartamento').value;
-    const rol = document.getElementById('regRol'). value;
+    const rol = document.getElementById('regRol').value; // ← Convertir a minúsculas
 
     if (!username || !password || !rol) {
         mostrarRespuesta('regResponse', '⚠️ Por favor completa todos los campos obligatorios', 'error');
@@ -126,7 +128,7 @@ async function registrarUsuario(event) {
             mostrarRespuesta('regResponse', data.msg || '✅ Usuario registrado correctamente', 'success');
             document.getElementById('registroForm').reset();
         } else {
-            mostrarRespuesta('regResponse', data. msg || 'Error al registrar usuario', 'error');
+            mostrarRespuesta('regResponse', data.msg || 'Error al registrar usuario', 'error');
             if (response.status === 401) {
                 cerrarSesion();
             }
@@ -140,9 +142,9 @@ async function registrarUsuario(event) {
 // FUNCIÓN: LOGIN USUARIO
 // ============================================
 async function loginUsuario(event) {
-    if (event) event. preventDefault();
+    if (event) event.preventDefault();
     
-    console.log('🚀 Iniciando login.. .');
+    console.log('🚀 Iniciando login...');
     
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
@@ -191,17 +193,17 @@ async function loginUsuario(event) {
                 localStorage.setItem('authToken', data.token);
                 console.log('💾 Token guardado');
                 
-                mostrarRespuesta('loginResponse', '✅ Login exitoso.  Redirigiendo...', 'success');
+                mostrarRespuesta('loginResponse', '✅ Login exitoso. Redirigiendo...', 'success');
                 setTimeout(() => {
-                    window.location. href = 'dashboard.html';
+                    window.location.href = 'dashboard.html';
                 }, 1500);
             } else {
                 console.error('❌ No hay token');
                 mostrarRespuesta('loginResponse', data.mensaje || 'Error: No se recibió el token', 'error');
             }
         } else {
-            console. error('❌ Login fallido');
-            mostrarRespuesta('loginResponse', data. mensaje || 'Error en el login', 'error');
+            console.error('❌ Login fallido');
+            mostrarRespuesta('loginResponse', data.mensaje || 'Error en el login', 'error');
         }
     } catch (error) {
         console.error('💥 Error:', error);
@@ -229,7 +231,7 @@ async function fichar() {
             }
         });
 
-        const data = await response. json();
+        const data = await response.json();
         
         if (response.ok) {
             mostrarRespuesta('ficharResponse', data.mensaje || '✅ Fichaje registrado correctamente', 'success');
@@ -244,6 +246,8 @@ async function fichar() {
     }
 }
 
+// REEMPLAZAR esta función en script.js
+
 // ============================================
 // FUNCIÓN: LISTAR FICHAJES DEL USUARIO
 // ============================================
@@ -252,7 +256,7 @@ async function listarFichajes() {
     
     if (!authToken) {
         mostrarRespuesta('listarResponse', '⚠️ No estás autenticado', 'error');
-        setTimeout(() => window.location. href = 'login.html', 2000);
+        setTimeout(() => window.location.href = 'login.html', 2000);
         return;
     }
 
@@ -264,9 +268,10 @@ async function listarFichajes() {
             }
         });
 
-        if (response.ok) {
+        if (response. ok) {
             const fichajes = await response.json();
             mostrarRespuesta('listarResponse', `✅ Se encontraron ${fichajes.length} fichajes`, 'success');
+            // Usar la función con botón editar
             mostrarTablaFichajesConEditar(fichajes);
         } else {
             const data = await response.json();
@@ -284,8 +289,6 @@ async function listarFichajes() {
 // FUNCIÓN: APROBAR SOLICITUD (SUPERVISOR)
 // ============================================
 async function aprobarSolicitud(solicitudId) {
-    console.log('📤 Intentando aprobar solicitud ID:', solicitudId);
-    
     const authToken = localStorage.getItem('authToken');
     
     if (!authToken) {
@@ -294,36 +297,19 @@ async function aprobarSolicitud(solicitudId) {
         return;
     }
 
-    // Validar que solicitudId sea un número válido
-    if (! solicitudId || isNaN(solicitudId)) {
-        alert('❌ Error: ID de solicitud inválido');
-        console.error('solicitudId inválido:', solicitudId);
+    if (!confirm('¿Estás seguro de que deseas aprobar esta solicitud?')) {
         return;
     }
-
-    if (! confirm('¿Estás seguro de que deseas aprobar esta solicitud?')) {
-        return;
-    }
-
-    // ✅ CORRECCIÓN: Usar URLSearchParams para construir la URL correctamente
-    const params = new URLSearchParams();
-    params.append('solicitudId', solicitudId);
-    
-    const url = `${API_BASE_URL}/aprobarSolicitud?${params. toString()}`;
-    console.log('📡 URL de la petición:', url);
 
     try {
-        const response = await fetch(url, {
+        const response = await fetch(`${API_BASE_URL}/aprobarSolicitud?solicitudId=${solicitudId}`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${authToken}`
             }
         });
 
-        console.log('📥 Status de la respuesta:', response.status);
-
         const data = await response.json();
-        console.log('📦 Respuesta del servidor:', data);
         
         if (response.ok) {
             alert(data.msg || '✅ Solicitud aprobada correctamente');
@@ -335,13 +321,13 @@ async function aprobarSolicitud(solicitudId) {
             }
         }
     } catch (error) {
-        console.error('💥 Error en aprobarSolicitud:', error);
         alert('❌ Error de conexión: ' + error.message);
     }
 }
 
+
 // ============================================
-// FUNCIÓN: SOLICITAR EDICIÓN
+// FUNCIÓN: SOLICITAR EDICIÓN (ACTUALIZADA - USA ID CORRECTO)
 // ============================================
 async function solicitarEdicion(event) {
     if (event) event.preventDefault();
@@ -354,6 +340,7 @@ async function solicitarEdicion(event) {
         return;
     }
 
+    // Obtener el ID del fichaje desde el campo oculto
     const fichajeId = document.getElementById('fichajeIdHidden')?.value;
     const nuevoInstanteInput = document.getElementById('nuevoInstante'). value;
     const usoHorario = document.getElementById('usoHorario').value;
@@ -368,6 +355,7 @@ async function solicitarEdicion(event) {
         return;
     }
 
+    // Convertir el formato datetime-local (YYYY-MM-DDTHH:mm) a formato backend (YYYY-MM-DD HH:mm:ss)
     const nuevoInstante = nuevoInstanteInput.replace('T', ' ') + ':00';
 
     console.log('📤 Enviando solicitud de edición:', {
@@ -390,15 +378,16 @@ async function solicitarEdicion(event) {
             })
         });
 
-        const data = await response. json();
+        const data = await response.json();
         
         console.log('📥 Respuesta del servidor:', data);
         
         if (response.ok) {
             mostrarRespuesta('edicionResponse', data.msg || '✅ Solicitud de edición registrada correctamente.  Redirigiendo a tus fichajes... ', 'success');
             
+            // Redirigir a fichajes después de 2 segundos
             setTimeout(() => {
-                window.location.href = 'fichajes. html';
+                window. location.href = 'fichajes.html';
             }, 2000);
         } else {
             mostrarRespuesta('edicionResponse', data.msg || data.mensaje || 'Error al solicitar edición', 'error');
@@ -412,11 +401,12 @@ async function solicitarEdicion(event) {
     }
 }
 
+
 // ============================================
-// FUNCIÓN: LISTAR SOLICITUDES PENDIENTES
+// FUNCIÓN: LISTAR SOLICITUDES PENDIENTES (SIN LÍNEA VERDE)
 // ============================================
 async function listarSolicitudesPendientes() {
-    const authToken = localStorage. getItem('authToken');
+    const authToken = localStorage.getItem('authToken');
     
     if (!authToken) {
         mostrarRespuesta('solicitudesResponse', '⚠️ No estás autenticado', 'error');
@@ -436,6 +426,7 @@ async function listarSolicitudesPendientes() {
             const solicitudes = await response.json();
             
             if (solicitudes && solicitudes.length > 0) {
+                // Ocultar el mensaje de respuesta
                 const responseElement = document.getElementById('solicitudesResponse');
                 if (responseElement) {
                     responseElement.style.display = 'none';
@@ -445,7 +436,7 @@ async function listarSolicitudesPendientes() {
                 mostrarRespuesta('solicitudesResponse', 'ℹ️ No hay solicitudes en tu departamento', 'success');
                 const tableContainer = document.getElementById('solicitudesTable');
                 if (tableContainer) {
-                    tableContainer. innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No hay solicitudes en tu departamento</p>';
+                    tableContainer.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No hay solicitudes en tu departamento</p>';
                 }
             }
         } else {
@@ -458,7 +449,7 @@ async function listarSolicitudesPendientes() {
             }
         }
     } catch (error) {
-        console. error('Error al listar solicitudes:', error);
+        console.error('Error al listar solicitudes:', error);
         mostrarRespuesta('solicitudesResponse', '❌ Error de conexión: ' + error.message, 'error');
     }
 }
@@ -472,7 +463,7 @@ function cerrarSesion() {
 }
 
 // ============================================
-// FUNCIÓN: VERIFICAR INTEGRIDAD
+// FUNCIÓN: VERIFICAR INTEGRIDAD (MEJORADA)
 // ============================================
 async function verificarIntegridad(event) {
     if (event) event.preventDefault();
@@ -485,14 +476,14 @@ async function verificarIntegridad(event) {
         return;
     }
 
-    const departamento = document.getElementById('departamento'). value;
+    const departamento = document.getElementById('departamento').value;
 
     if (!departamento) {
         mostrarRespuesta('verificarResponse', '⚠️ Por favor ingresa un departamento', 'error');
         return;
     }
 
-    mostrarRespuesta('verificarResponse', '🔄 Verificando integridad, por favor espera...', 'success');
+    mostrarRespuesta('verificarResponse', '🔄 Verificando integridad, por favor espera... ', 'success');
 
     try {
         const response = await fetch(`${API_BASE_URL}/verificarIntegridadFichajes?departamento=${encodeURIComponent(departamento)}`, {
@@ -502,17 +493,19 @@ async function verificarIntegridad(event) {
             }
         });
 
-        const data = await response. json();
+        const data = await response.json();
         
         console.log('📦 Respuesta de verificación:', data);
         
         if (response.ok) {
+            // Ocultar el mensaje de respuesta para mostrar solo la tabla
             const responseElement = document.getElementById('verificarResponse');
             if (responseElement) {
-                responseElement.style.display = 'none';
+                responseElement. style.display = 'none';
             }
             
-            mostrarTablaIntegridad(data. fichajes || data, departamento);
+            // Mostrar la tabla con los detalles de cada fichaje
+            mostrarTablaIntegridad(data.fichajes || data, departamento);
         } else {
             mostrarRespuesta('verificarResponse', data.mensaje || data.msg || 'Error al verificar integridad', 'error');
             if (response.status === 401) {
@@ -526,12 +519,12 @@ async function verificarIntegridad(event) {
 }
 
 // ============================================
-// FUNCIÓN: MOSTRAR TABLA DE INTEGRIDAD
+// FUNCIÓN: MOSTRAR TABLA DE INTEGRIDAD (ORDENADA POR ID)
 // ============================================
 function mostrarTablaIntegridad(fichajes, departamento) {
     const container = document.getElementById('detallesVerificacion');
     
-    if (!container) return;
+    if (! container) return;
     
     if (! fichajes || fichajes.length === 0) {
         container. innerHTML = `
@@ -542,21 +535,23 @@ function mostrarTablaIntegridad(fichajes, departamento) {
         return;
     }
     
+    // Ordenar fichajes por ID descendente (más alto primero)
     const fichajesOrdenados = [... fichajes].sort((a, b) => {
         return (b.id || 0) - (a.id || 0);
     });
     
+    // Contar fichajes corruptos y válidos
     let corruptos = 0;
     let validos = 0;
     
-    fichajesOrdenados. forEach(f => {
+    fichajesOrdenados.forEach(f => {
         const mensaje = (f.mensaje || f.estado || '').toUpperCase();
         
         if (mensaje.includes('INCONSISTENCIA') || 
             mensaje.includes('CORRUPTO') || 
             mensaje. includes('COMPROMETID') ||
             mensaje.includes('INVÁLIDO') ||
-            mensaje.includes('ERROR') ||
+            mensaje. includes('ERROR') ||
             mensaje.includes('DETECTADA')) {
             corruptos++;
         } else {
@@ -615,11 +610,12 @@ function mostrarTablaIntegridad(fichajes, departamento) {
         const tipo = fichaje.tipo || 'N/A';
         const mensaje = fichaje.mensaje || fichaje.estado || 'Estado desconocido';
         
+        // Determinar si está corrupto
         const mensajeUpper = mensaje.toUpperCase();
         const esCorrupto = mensajeUpper.includes('INCONSISTENCIA') || 
                           mensajeUpper.includes('CORRUPTO') || 
                           mensajeUpper.includes('COMPROMETID') ||
-                          mensajeUpper.includes('INVÁLIDO') ||
+                          mensajeUpper. includes('INVÁLIDO') ||
                           mensajeUpper.includes('ERROR') ||
                           mensajeUpper.includes('DETECTADA');
         
@@ -647,7 +643,8 @@ function mostrarTablaIntegridad(fichajes, departamento) {
         </table>
     `;
     
-    const porcentajeValidos = totalFichajes > 0 ?  ((validos / totalFichajes) * 100).toFixed(1) : 0;
+    // Agregar resumen al final
+    const porcentajeValidos = totalFichajes > 0 ? ((validos / totalFichajes) * 100).toFixed(1) : 0;
     const porcentajeCorruptos = totalFichajes > 0 ?  ((corruptos / totalFichajes) * 100).toFixed(1) : 0;
     
     tableHTML += `
@@ -687,7 +684,7 @@ function mostrarDetallesIntegridad(integra, departamento) {
             <div class="card-exito">
                 <div class="icon-grande">✅</div>
                 <h2>¡Integridad Verificada!</h2>
-                <p>Todos los fichajes del departamento <strong>${departamento}</strong> son válidos. </p>
+                <p>Todos los fichajes del departamento <strong>${departamento}</strong> son válidos.</p>
                 <ul style="text-align: left; margin-top: 20px;">
                     <li>✓ Ningún registro ha sido modificado</li>
                     <li>✓ La cadena de hashes es consistente</li>
@@ -714,14 +711,14 @@ function mostrarDetallesIntegridad(integra, departamento) {
 }
 
 // ============================================
-// FUNCIÓN: MOSTRAR TABLA DE FICHAJES (SIMPLE)
+// FUNCIÓN: MOSTRAR TABLA DE FICHAJES (CORREGIDA)
 // ============================================
 function mostrarTablaFichajes(fichajes) {
     const tableContainer = document.getElementById('fichajesTable');
     
     if (!tableContainer) return;
     
-    if (! fichajes || fichajes.length === 0) {
+    if (!fichajes || fichajes.length === 0) {
         tableContainer.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No hay fichajes registrados</p>';
         return;
     }
@@ -740,10 +737,11 @@ function mostrarTablaFichajes(fichajes) {
 
     fichajes.forEach(fichaje => {
         const instanteAnterior = fichaje.instanteAnterior || 'N/A';
-        const tipoAnterior = fichaje. tipoAnterior || 'N/A';
+        const tipoAnterior = fichaje.tipoAnterior || 'N/A';
         const nuevoInstante = fichaje.nuevoInstante;
         const nuevoTipo = fichaje.nuevoTipo;
         
+        // Verificar si el fichaje fue editado
         const fueEditado = nuevoInstante && nuevoInstante !== null && nuevoInstante !== '';
         
         let celdaFechaHora = '';
@@ -751,6 +749,7 @@ function mostrarTablaFichajes(fichajes) {
         let celdaEstado = '';
         
         if (fueEditado) {
+            // Fichaje editado: mostrar valor original tachado y nuevo valor
             celdaFechaHora = `
                 <div>
                     <div style="color: #dc3545; text-decoration: line-through; font-size: 0.85em;">
@@ -775,6 +774,7 @@ function mostrarTablaFichajes(fichajes) {
             
             celdaEstado = '<span style="background: #fff3cd; padding: 4px 8px; border-radius: 4px; color: #856404; font-size: 0.85em; font-weight: bold;">✏️ Editado</span>';
         } else {
+            // Fichaje normal: sin ediciones (solo mostrar valores originales)
             celdaFechaHora = instanteAnterior;
             celdaTipo = `<strong>${tipoAnterior}</strong>`;
             celdaEstado = '<span style="color: #6c757d; font-size: 0.85em;">📋 Original</span>';
@@ -798,7 +798,7 @@ function mostrarTablaFichajes(fichajes) {
 }
 
 // ============================================
-// FUNCIÓN: MOSTRAR TABLA DE SOLICITUDES
+// FUNCIÓN: MOSTRAR TABLA DE SOLICITUDES (CORREGIDA PARA TU BACKEND)
 // ============================================
 function mostrarTablaSolicitudes(solicitudes) {
     const tableContainer = document.getElementById('solicitudesTable');
@@ -830,12 +830,14 @@ function mostrarTablaSolicitudes(solicitudes) {
         const tipo = sol.tipo || 'N/A';
         const aprobado = sol.aprobado;
         
+        // Verificar si está aprobado
+        // Tu backend devuelve "VERDADERO" o "FALSO"
         let estaAprobado = false;
         
         if (typeof aprobado === 'boolean') {
             estaAprobado = aprobado === true;
         } else if (typeof aprobado === 'string') {
-            const aprobadoUpper = aprobado.toUpperCase(). trim();
+            const aprobadoUpper = aprobado.toUpperCase().trim();
             estaAprobado = aprobadoUpper === 'VERDADERO' || 
                           aprobadoUpper === 'TRUE' || 
                           aprobadoUpper === 'SI' || 
@@ -845,15 +847,17 @@ function mostrarTablaSolicitudes(solicitudes) {
             estaAprobado = aprobado === 1;
         }
         
-        const botonAprobar = ! estaAprobado
+        // Determinar qué mostrar en la columna de acción
+        const botonAprobar = !estaAprobado
             ? `<button class="btn btn-success btn-sm" onclick="aprobarSolicitud(${id})">✓ Aprobar</button>`
             : `<span style="color: #28a745; font-weight: bold;">✅ Aprobada</span>`;
         
-        const estadoTexto = ! estaAprobado 
+        const estadoTexto = !estaAprobado 
             ? '<span style="color: #ffc107;">⏳ Pendiente</span>' 
             : '<span style="color: #28a745;">✅ Aprobada</span>';
         
-        const estiloFila = estaAprobado ?  'style="opacity: 0.6; background-color: #f0f0f0;"' : '';
+        // Estilo diferente para solicitudes aprobadas
+        const estiloFila = estaAprobado ? 'style="opacity: 0.6; background-color: #f0f0f0;"' : '';
         
         tableHTML += `
             <tr ${estiloFila}>
@@ -874,6 +878,9 @@ function mostrarTablaSolicitudes(solicitudes) {
     tableContainer.innerHTML = tableHTML;
 }
 
+
+
+
 // ============================================
 // FUNCIÓN: MOSTRAR TABLA DE FICHAJES DEL USUARIO (CON BOTÓN EDITAR Y ESTADOS)
 // ============================================
@@ -882,7 +889,7 @@ function mostrarTablaFichajesConEditar(fichajes) {
     
     if (!tableContainer) return;
     
-    if (!fichajes || fichajes. length === 0) {
+    if (! fichajes || fichajes.length === 0) {
         tableContainer.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No hay fichajes registrados</p>';
         return;
     }
@@ -900,7 +907,7 @@ function mostrarTablaFichajesConEditar(fichajes) {
             <tbody>
     `;
 
-    fichajes. forEach(fichaje => {
+    fichajes.forEach(fichaje => {
         const instanteAnterior = fichaje.instanteAnterior || 'N/A';
         const tipoAnterior = fichaje.tipoAnterior || 'N/A';
         const nuevoInstante = fichaje.nuevoInstante;
@@ -909,14 +916,14 @@ function mostrarTablaFichajesConEditar(fichajes) {
         const aprobadoEdicion = fichaje.aprobadoEdicion;
         
         // Determinar el estado basado en aprobadoEdicion
-        let estadoAprobacion = null;
+        let estadoAprobacion = null; // null, 'pendiente', 'aprobado'
         
         if (aprobadoEdicion === null || aprobadoEdicion === undefined) {
-            estadoAprobacion = null;
+            estadoAprobacion = null; // Nunca se solicitó edición
         } else if (typeof aprobadoEdicion === 'boolean') {
             estadoAprobacion = aprobadoEdicion ? 'aprobado' : 'pendiente';
         } else if (typeof aprobadoEdicion === 'string') {
-            const aprobadoUpper = aprobadoEdicion.toUpperCase().trim();
+            const aprobadoUpper = aprobadoEdicion. toUpperCase(). trim();
             if (aprobadoUpper === 'VERDADERO' || aprobadoUpper === 'TRUE') {
                 estadoAprobacion = 'aprobado';
             } else if (aprobadoUpper === 'FALSO' || aprobadoUpper === 'FALSE') {
@@ -924,6 +931,7 @@ function mostrarTablaFichajesConEditar(fichajes) {
             }
         }
         
+        // Verificar si el fichaje fue editado Y aprobado
         const fueEditado = nuevoInstante && nuevoInstante !== null && nuevoInstante !== '' && estadoAprobacion === 'aprobado';
         
         let celdaFechaHora = '';
@@ -932,10 +940,10 @@ function mostrarTablaFichajesConEditar(fichajes) {
         let botonEditar = '';
         
         if (estadoAprobacion === 'aprobado') {
-            // ✅ EDICIÓN APROBADA
+            // ✅ EDICIÓN APROBADA: Mostrar valor original tachado y nuevo valor
             celdaFechaHora = `
                 <div>
-                    <div style="color: #dc3545; text-decoration: line-through; font-size: 0. 85em;">
+                    <div style="color: #dc3545; text-decoration: line-through; font-size: 0.85em;">
                         ${instanteAnterior}
                     </div>
                     <div style="color: #28a745; font-weight: bold;">
@@ -957,61 +965,54 @@ function mostrarTablaFichajesConEditar(fichajes) {
             
             celdaEstado = '<span style="background: #d4edda; padding: 6px 10px; border-radius: 4px; color: #155724; font-size: 0.85em; font-weight: bold; display: inline-block;">✏️ Editado</span>';
             
-            const instanteEscapado = String(nuevoInstante).replace(/'/g, "\\'");
-            const tipoEscapado = String(nuevoTipo).replace(/'/g, "\\'");
-            botonEditar = `<button class="btn btn-secondary btn-sm" onclick="abrirFormularioEdicion(${idFichaje}, '${instanteEscapado}', '${tipoEscapado}')" style="font-size: 0.85em; white-space: nowrap;">✏️ Editar</button>`;
+            // Permitir nueva solicitud de edición
+            const instanteEscapado = nuevoInstante.replace(/'/g, "\\'");
+            const tipoEscapado = nuevoTipo.replace(/'/g, "\\'");
+            botonEditar = `<button class="btn btn-secondary btn-sm" onclick="abrirFormularioEdicion('${idFichaje}', '${instanteEscapado}', '${tipoEscapado}')" style="font-size: 0.85em; white-space: nowrap;">✏️ Editar</button>`;
             
         } else if (estadoAprobacion === 'pendiente') {
-            // ⏳ PENDIENTE: Determinar el valor efectivo actual
-            // Si nuevoInstante existe → última edición aprobada es el valor efectivo
-            // Si nuevoInstante es null → el valor original es el valor efectivo
-            const valorEfectivoActual = fichaje.nuevoInstante || fichaje.instanteAnterior;
-            const tipoEfectivoActual = fichaje.nuevoTipo || fichaje.tipoAnterior;
-            
-            // El valor solicitado viene de solicitudInstante (solo existe cuando aprobado=FALSO)
-            const valorSolicitado = fichaje. solicitudInstante;
-            const tipoSolicitado = fichaje.solicitudTipo;
-            
+            // ⏳ PENDIENTE DE APROBACIÓN: No mostrar cambios aún
             celdaFechaHora = `
-                <div style="line-height: 1.6;">
-                    <div style="color: #333; font-weight: 500;">${valorEfectivoActual}</div>
-                    <div style="display: flex; align-items: center; gap: 5px; margin-top: 5px;">
-                        <span style="color: #856404; font-size: 0.9em;">→</span>
-                        <span style="color: #856404; font-weight: 600; font-size: 0.95em;">${valorSolicitado}</span>
-                    </div>
+                <div>
+                    <div>${instanteAnterior}</div>
+                    <small style="color: #856404; font-style: italic; display: block; margin-top: 5px;">
+                        → ${nuevoInstante}
+                    </small>
                 </div>
             `;
             
             celdaTipo = `
-                <div style="line-height: 1.6;">
-                    <div style="color: #333;"><strong>${tipoEfectivoActual}</strong></div>
-                    <div style="display: flex; align-items: center; gap: 5px; margin-top: 5px;">
-                        <span style="color: #856404; font-size: 0.9em;">→</span>
-                        <span style="color: #856404; font-weight: 600; font-size: 0.95em;">${tipoSolicitado}</span>
-                    </div>
+                <div>
+                    <div><strong>${tipoAnterior}</strong></div>
+                    <small style="color: #856404; font-style: italic; display: block; margin-top: 5px;">
+                        → ${nuevoTipo}
+                    </small>
                 </div>
             `;
             
             celdaEstado = '<span style="background: #fff3cd; padding: 6px 10px; border-radius: 4px; color: #856404; font-size: 0.85em; font-weight: bold; display: inline-block;">⏳ Pendiente</span>';
             
+            // Deshabilitar botón mientras está pendiente
             botonEditar = `<button class="btn btn-secondary btn-sm" disabled style="font-size: 0. 85em; opacity: 0.5; cursor: not-allowed; white-space: nowrap;">⏳ En trámite</button>`;
             
         } else {
-            // 📋 ORIGINAL
+            // 📋 ORIGINAL: Sin ediciones
             celdaFechaHora = instanteAnterior;
             celdaTipo = `<strong>${tipoAnterior}</strong>`;
             celdaEstado = '<span style="color: #6c757d; font-size: 0.85em; display: inline-block;">📋 Original</span>';
             
-            const instanteEscapado = String(instanteAnterior).replace(/'/g, "\\'");
-            const tipoEscapado = String(tipoAnterior).replace(/'/g, "\\'");
-            botonEditar = `<button class="btn btn-secondary btn-sm" onclick="abrirFormularioEdicion(${idFichaje}, '${instanteEscapado}', '${tipoEscapado}')" style="font-size: 0.85em; white-space: nowrap;">✏️ Editar</button>`;
+            // Botón normal para solicitar edición
+            const instanteEscapado = instanteAnterior.replace(/'/g, "\\'");
+            const tipoEscapado = tipoAnterior.replace(/'/g, "\\'");
+            botonEditar = `<button class="btn btn-secondary btn-sm" onclick="abrirFormularioEdicion('${idFichaje}', '${instanteEscapado}', '${tipoEscapado}')" style="font-size: 0. 85em; white-space: nowrap;">✏️ Editar</button>`;
         }
         
+        // Estilo de fila según el estado
         let estiloFila = '';
         if (estadoAprobacion === 'aprobado') {
-            estiloFila = 'background-color: #f0fff4; border-left: 3px solid #28a745;';
+            estiloFila = 'background-color: #f0fff4; border-left: 3px solid #28a745;'; // Verde para aprobado
         } else if (estadoAprobacion === 'pendiente') {
-            estiloFila = 'background-color: #fffbf0; border-left: 3px solid #ffc107;';
+            estiloFila = 'background-color: #fffbf0; border-left: 3px solid #ffc107;'; // Amarillo para pendiente
         }
         
         tableHTML += `
@@ -1036,12 +1037,14 @@ function mostrarTablaFichajesConEditar(fichajes) {
 // FUNCIÓN: ABRIR FORMULARIO DE EDICIÓN
 // ============================================
 function abrirFormularioEdicion(idFichaje, instante, tipo) {
+    // Guardar los datos del fichaje en localStorage para usarlos en la página de edición
     localStorage.setItem('fichajeParaEditar', JSON.stringify({
         id: idFichaje,
         instante: instante,
         tipo: tipo
     }));
     
+    // Redirigir a la página de edición
     window.location.href = 'editar.html';
 }
 
@@ -1102,22 +1105,29 @@ function poblarSelectFichajes(fichajes) {
         return;
     }
     
+    // Ordenar fichajes por instante descendente (más reciente primero)
     const fichajesOrdenados = [... fichajes].sort((a, b) => {
         const fechaA = new Date(a. instanteAnterior || a.instante || 0);
         const fechaB = new Date(b.instanteAnterior || b.instante || 0);
         return fechaB - fechaA;
     });
     
+    // Construir las opciones del select
     let optionsHTML = '<option value="">Selecciona un fichaje</option>';
     
-    fichajesOrdenados. forEach(fichaje => {
-        const idFichaje = fichaje.id_fichaje || fichaje.id;
+    fichajesOrdenados.forEach(fichaje => {
+        // Usar el id_fichaje que viene del backend (el ID real de la BD)
+        const idFichaje = fichaje. id_fichaje || fichaje. id;
+        
+        // Mostrar el instante y tipo del fichaje (SIN mostrar el ID)
         const instante = fichaje.instanteAnterior || fichaje.instante || 'N/A';
-        const tipo = fichaje.tipoAnterior || fichaje. tipo || 'N/A';
+        const tipo = fichaje.tipoAnterior || fichaje.tipo || 'N/A';
         
+        // Verificar si fue editado
         const fueEditado = fichaje.nuevoInstante && fichaje.nuevoInstante !== null && fichaje.nuevoInstante !== '';
-        const badge = fueEditado ?  ' ✏️ [Editado]' : '';
+        const badge = fueEditado ? ' ✏️ [Editado]' : '';
         
+        // Crear la opción con el id_fichaje real como value (el usuario NO lo ve)
         optionsHTML += `<option value="${idFichaje}">${instante} - ${tipo}${badge}</option>`;
     });
     
