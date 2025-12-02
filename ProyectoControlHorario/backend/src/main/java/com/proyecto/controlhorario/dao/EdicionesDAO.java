@@ -108,7 +108,7 @@ public class EdicionesDAO {
         String dbPath = dbFolder+"departamento_"+departamento.toLowerCase()+".db";
 
         try {
-            DatabaseManager.withConnection(dbPath, conn -> {
+            DatabaseManager.withTransaction(dbPath, conn -> {
                 // Obtener huella del fichaje original en la tabla Fichajes
                 String huella_fichaje = null;
                 String query1 = "SELECT huella FROM fichajes WHERE id = ?";

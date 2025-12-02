@@ -1,0 +1,3 @@
+com\proyecto\controlhorario\dao\FichajesDAOTest.class
+com\proyecto\controlhorario\controllers\ControladorEdicionesTest.class
+com\proyecto\controlhorario\service\EdicionesServiceTest.class
