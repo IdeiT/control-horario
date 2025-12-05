@@ -26,7 +26,16 @@
                 
                 <div class="form-group">
                     <label for="regPassword">Contraseña *</label>
-                    <input type="password" id="regPassword" placeholder="Ingresa la contraseña" required>
+                    <input 
+                        type="password" 
+                        id="regPassword" 
+                        placeholder="Ingresa la contraseña (mínimo 8 caracteres)" 
+                        required 
+                        minlength="8"
+                    >
+                    <small style="color: #666; display: block; margin-top: 5px;">
+                        La contraseña debe tener al menos 8 caracteres
+                    </small>
                 </div>
                 
                 <div class="form-group">
