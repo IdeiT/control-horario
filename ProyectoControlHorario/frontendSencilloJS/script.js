@@ -532,7 +532,7 @@ async function verificarIntegridad(event) {
         return;
     }
 
-    const departamento = document.getElementById('departamento'). value;
+    const departamento = document.getElementById('regDepartamento').value;
 
     if (!departamento) {
         mostrarRespuesta('verificarResponse', '⚠️ Por favor ingresa un departamento', 'error');
