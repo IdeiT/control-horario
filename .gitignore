@@ -11,4 +11,4 @@ NotasGit.txt
 Modelo de Datos.xlsx
 
 Ignorar TODOS los archivos .p12 en el proyecto (Recomendado)
-**/*.p12
+#**/*.p12
