@@ -12,6 +12,7 @@ import com.proyecto.controlhorario.exceptions.UnauthorizedException;
 import com.proyecto.controlhorario.security.JwtUtil;
 
 import java.util.HashMap;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 
@@ -123,5 +124,14 @@ public class UsuarioService {
 
         return nombreDepartamentoCreado;
     }
+
+    public List<String> obtenerDepartamentos() {
+        return usuarioDAO.listarDepartamentos();
+    }
+
+    public List<String> obtenerRoles() {
+        return usuarioDAO.listarRoles();
+    }
 }
+
     

@@ -13,6 +13,7 @@ import com.proyecto.controlhorario.service.*;
 import io.jsonwebtoken.JwtException;
 import jakarta.validation.Valid;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
@@ -144,6 +145,32 @@ public class ControladorUsuario {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new CrearDepartamentoResponse("Error interno: " + e.getMessage()));
+        }
+    }
+
+    // ✅ ENDPOINT: LISTAR DEPARTAMENTOS
+    @GetMapping("/listarDepartamentos")
+    public ResponseEntity<?> listarDepartamentos() {
+        try {
+            List<String> departamentos = servicio.obtenerDepartamentos();
+            return ResponseEntity.ok(departamentos);
+        } catch (Exception e) {
+            return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                . body("Error al obtener departamentos: " + e.getMessage());
+        }
+    }
+
+    // ✅ ENDPOINT: LISTAR ROLES
+    @GetMapping("/listarRoles")
+    public ResponseEntity<?> listarRoles() {
+        try {
+            List<String> roles = servicio.obtenerRoles();
+            return ResponseEntity.ok(roles);
+        } catch (Exception e) {
+            return ResponseEntity
+                .status(HttpStatus. INTERNAL_SERVER_ERROR)
+                .body("Error al obtener roles: " + e.getMessage());
         }
     }
 

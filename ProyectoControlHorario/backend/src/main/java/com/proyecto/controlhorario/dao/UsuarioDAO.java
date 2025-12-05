@@ -15,6 +15,8 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Repository
@@ -229,6 +231,49 @@ public class UsuarioDAO {
         }
 
         return new CrearDepartamentoResponse(nombreDepartamento, "Departamento creado correctamente.");
+    }
+
+
+    public List<String> listarDepartamentos() {
+        String dbPath = dbFolder + "control_general.db";
+        List<String> departamentos = new ArrayList<>();
+        
+        try {
+            DatabaseManager.withConnection(dbPath, conn -> {
+                String sql = "SELECT nombre FROM departamentos ORDER BY id";
+                try (PreparedStatement stmt = conn.prepareStatement(sql);
+                    ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        departamentos.add(rs. getString("nombre"));
+                    }
+                }
+            });
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return departamentos;
+    }
+
+    public List<String> listarRoles() {
+        String dbPath = dbFolder + "control_general.db";
+        List<String> roles = new ArrayList<>();
+        
+        try {
+            DatabaseManager.withConnection(dbPath, conn -> {
+                String sql = "SELECT nombre FROM roles ORDER BY id";
+                try (PreparedStatement stmt = conn.prepareStatement(sql);
+                    ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        roles.add(rs.getString("nombre"));
+                    }
+                }
+            });
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return roles;
     }
 
 

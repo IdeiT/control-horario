@@ -1126,3 +1126,65 @@ function poblarSelectFichajes(fichajes) {
     
     select.innerHTML = optionsHTML;
 }
+
+// ============================================
+// FUNCIÓN: CARGAR DEPARTAMENTOS
+// ============================================
+async function cargarDepartamentos() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/general/listarDepartamentos`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            const departamentos = await response.json();
+            
+            // Llenar el select de departamentos
+            const select = document.getElementById('regDepartamento');
+            select.innerHTML = '<option value="">Seleccionar departamento</option>';
+            
+            departamentos.forEach(dept => {
+                const option = document.createElement('option');
+                option.value = dept;
+                option.textContent = dept;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error al cargar departamentos:', error);
+    }
+}
+
+// ============================================
+// FUNCIÓN: CARGAR ROLES
+// ============================================
+async function cargarRoles() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/general/listarRoles`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            const roles = await response.json();
+            
+            // Llenar el select de roles
+            const select = document.getElementById('regRol');
+            select.innerHTML = '<option value="">Seleccionar rol</option>';
+            
+            roles. forEach(rol => {
+                const option = document.createElement('option');
+                option.value = rol;
+                option.textContent = rol;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error al cargar roles:', error);
+    }
+}
