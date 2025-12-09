@@ -658,7 +658,10 @@ function mostrarTablaIntegridad(fichajes, departamento) {
     fichajesOrdenados.forEach(fichaje => {
         const id = fichaje.id || '-';
         const username = fichaje.username || fichaje.usuario || 'N/A';
-        const instante = fichaje.instante || fichaje.fecha || 'N/A';
+
+        const instanteUTC = fichaje.instante || fichaje.fecha || 'N/A';
+        const instante = formatearFechaLocal(instanteUTC);
+
         const tipo = fichaje.tipo || 'N/A';
         const mensaje = fichaje.mensaje || fichaje.estado || 'Estado desconocido';
         
@@ -751,10 +754,13 @@ function mostrarTablaSolicitudes(solicitudes) {
             <tbody>
     `;
 
-    solicitudes. forEach(sol => {
+    solicitudes.forEach(sol => {
         const id = sol.id || '-';
         const username = sol.username || sol.usuario || 'N/A';  // ← NUEVO CAMPO
-        const nuevoInstante = sol.nuevo_instante || sol.nuevoInstante || 'N/A';
+
+        const nuevoInstanteUTC = sol.nuevo_instante || sol.nuevoInstante || 'N/A';
+        const nuevoInstante = formatearFechaLocal(nuevoInstanteUTC);
+
         const tipo = sol. tipo || 'N/A';
         const aprobado = sol.aprobado;
         
@@ -829,10 +835,16 @@ function mostrarTablaFichajesConEditar(fichajes) {
             <tbody>
     `;
 
-    fichajes. forEach(fichaje => {
-        const instanteAnterior = fichaje.instanteAnterior || 'N/A';
+    fichajes.forEach(fichaje => {
+
+        const instanteAnteriorUTC = fichaje.instanteAnterior || 'N/A';
+        const instanteAnterior = formatearFechaLocal(instanteAnteriorUTC);
+        
+        const nuevoInstanteUTC = fichaje.nuevoInstante;
+        const nuevoInstante = nuevoInstanteUTC ?  formatearFechaLocal(nuevoInstanteUTC) : null;
+
         const tipoAnterior = fichaje.tipoAnterior || 'N/A';
-        const nuevoInstante = fichaje.nuevoInstante;
+ 
         const nuevoTipo = fichaje.nuevoTipo;
         const idFichaje = fichaje.id_fichaje || fichaje.id;
         const aprobadoEdicion = fichaje.aprobadoEdicion;
@@ -898,7 +910,8 @@ function mostrarTablaFichajesConEditar(fichajes) {
             const tipoEfectivoActual = fichaje.nuevoTipo || fichaje.tipoAnterior;
             
             // El valor solicitado viene de solicitudInstante (solo existe cuando aprobado=FALSO)
-            const valorSolicitado = fichaje. solicitudInstante;
+            const solicitudInstanteUTC = fichaje.solicitudInstante;
+            const valorSolicitado = solicitudInstanteUTC ? formatearFechaLocal(solicitudInstanteUTC) : null;
             const tipoSolicitado = fichaje.solicitudTipo;
             
             celdaFechaHora = `
@@ -1041,7 +1054,10 @@ function poblarSelectFichajes(fichajes) {
     
     fichajesOrdenados. forEach(fichaje => {
         const idFichaje = fichaje.id_fichaje || fichaje.id;
-        const instante = fichaje.instanteAnterior || fichaje.instante || 'N/A';
+
+        const instanteUTC = fichaje.instanteAnterior || fichaje. instante || 'N/A';
+        const instante = formatearFechaLocal(instanteUTC);
+
         const tipo = fichaje.tipoAnterior || fichaje. tipo || 'N/A';
         
         const fueEditado = fichaje.nuevoInstante && fichaje.nuevoInstante !== null && fichaje.nuevoInstante !== '';
@@ -1248,4 +1264,82 @@ function mostrarDialogoExito(titulo, datos) {
     mensaje += '\n✅ Operación completada exitosamente';
     
     alert(mensaje);
+}
+
+
+
+
+// ============================================
+// FUNCIONES DE CONVERSIÓN DE TIMEZONE
+// ============================================
+
+/**
+ * Parsea un timestamp del backend (formato "YYYY-MM-DD HH:mm:ss" en UTC+0)
+ * y lo convierte a un objeto Date en UTC
+ * 
+ * @param {string} instanteBackend - Ejemplo: "2025-12-05 19:37:32"
+ * @returns {Date|null} - Objeto Date o null si es inválido
+ */
+function parsearUTCBackend(instanteBackend) {
+    if (!instanteBackend || instanteBackend === 'N/A' || instanteBackend === '-') {
+        return null;
+    }
+    
+    // El backend envía: "2025-12-05 19:37:32" (UTC+0 sin indicador)
+    // Convertir a formato ISO 8601: "2025-12-05T19:37:32Z"
+    const isoString = instanteBackend. replace(' ', 'T') + 'Z';
+    const fecha = new Date(isoString);
+    
+    // Verificar si es válida
+    if (isNaN(fecha.getTime())) {
+        console.warn('Fecha inválida recibida:', instanteBackend);
+        return null;
+    }
+    
+    return fecha;
+}
+
+/**
+ * Convierte un timestamp UTC del backend a la hora local del navegador
+ * y lo formatea para mostrar al usuario
+ * 
+ * @param {string} instanteBackend - Ejemplo: "2025-12-05 19:37:32" (UTC+0)
+ * @returns {string} - Fecha formateada en hora local.  Ejemplo: "05/12/2025, 20:37:32"
+ */
+function formatearFechaLocal(instanteBackend) {
+    const fecha = parsearUTCBackend(instanteBackend);
+    
+    if (!fecha) {
+        return instanteBackend; // Si falla, mostrar el original
+    }
+    
+    // Convertir a hora local del navegador
+    return fecha.toLocaleString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+    });
+}
+
+/**
+ * Obtiene la zona horaria del navegador (para debugging/logs)
+ * 
+ * @returns {string} - Ejemplo: "Europe/Madrid", "America/New_York"
+ */
+function obtenerTimezoneLocal() {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone;
+}
+
+/**
+ * Obtiene el offset UTC del navegador (para debugging)
+ * 
+ * @returns {string} - Ejemplo: "UTC+1", "UTC-5"
+ */
+function obtenerOffsetLocal() {
+    const offset = -(new Date(). getTimezoneOffset() / 60);
+    return `UTC${offset >= 0 ?  '+' : ''}${offset}`;
 }
