@@ -403,19 +403,24 @@ async function solicitarEdicion(event) {
 
     const fichajeId = document.getElementById('fichajeIdHidden')?.value;
     const nuevoInstanteInput = document.getElementById('nuevoInstante'). value;
-    const usoHorario = document.getElementById('usoHorario').value;
 
     if (!fichajeId) {
         mostrarRespuesta('edicionResponse', '⚠️ No se ha seleccionado un fichaje válido', 'error');
         return;
     }
 
-    if (!nuevoInstanteInput || !usoHorario) {
+    if (!nuevoInstanteInput) {
         mostrarRespuesta('edicionResponse', '⚠️ Por favor completa todos los campos', 'error');
         return;
     }
 
-    const nuevoInstante = nuevoInstanteInput.replace('T', ' ') + ':00';
+    // ✅ NUEVO:  Convertir de hora local a UTC
+    const nuevoInstante = convertirLocalAUTC(nuevoInstanteInput);
+
+    if (!nuevoInstante) {
+        mostrarRespuesta('edicionResponse', '❌ Fecha inválida', 'error');
+        return;
+    }
 
     console.log('📤 Enviando solicitud de edición:', {
         id_fichaje: parseInt(fichajeId),
@@ -1342,4 +1347,41 @@ function obtenerTimezoneLocal() {
 function obtenerOffsetLocal() {
     const offset = -(new Date(). getTimezoneOffset() / 60);
     return `UTC${offset >= 0 ?  '+' : ''}${offset}`;
+}
+
+
+
+
+
+
+/**
+ * Convierte una fecha/hora local (del input datetime-local) a UTC 0
+ * para enviar al backend
+ * 
+ * @param {string} instanteLocal - Ejemplo: "2025-12-09T16:00" (del input)
+ * @returns {string} - Formato backend: "2025-12-09 15:00:00" (UTC+0)
+ */
+function convertirLocalAUTC(instanteLocal) {
+    if (!instanteLocal) return null;
+    
+    // El input datetime-local devuelve: "2025-12-09T16:00"
+    // JavaScript lo interpreta como hora LOCAL del navegador
+    const fechaLocal = new Date(instanteLocal);
+    
+    // Verificar si es válida
+    if (isNaN(fechaLocal.getTime())) {
+        console.error('Fecha inválida:', instanteLocal);
+        return null;
+    }
+    
+    // Convertir a UTC usando toISOString() y formatear
+    const isoUTC = fechaLocal.toISOString(); // "2025-12-09T15:00:00.123Z"
+    
+    // Formato para el backend: "YYYY-MM-DD HH:mm:ss"
+    const instanteUTC = isoUTC.replace('T', ' ').substring(0, 19);
+    
+    console.log('🕐 Hora local ingresada:', fechaLocal.toLocaleString('es-ES'));
+    console.log('🌍 Hora UTC (para backend):', instanteUTC);
+    
+    return instanteUTC;
 }
