@@ -42,14 +42,14 @@ public class FichajesService {
 
 
     // Nuevo método para listar fichajes de un usuario en concreto
-    public List<ListarFichajeUsuarioResponse> listarFichajesUsuario(String username, String departamento, String rolUsuarioActual) {
+    public List<ListarFichajeUsuarioResponse> listarFichajesUsuario(String username, String departamento, String rolUsuarioActual, int pagina, int elementosPorPagina) {
 
         // Solo los roles de Supervisor y Empleado pueden listar sus propios fichajes
         if (rolUsuarioActual.equals("Administrador") || rolUsuarioActual.equals("Auditor")) {
             throw new ForbiddenException("Los administradores y auditores no fichan en el sistema");
         }
 
-        List<ListarFichajeUsuarioResponse> response = fichajeDAO.listarFichajesUsuario(username, departamento);
+        List<ListarFichajeUsuarioResponse> response = fichajeDAO.listarFichajesUsuario(username, departamento, pagina, elementosPorPagina);
         return response;
     }
 

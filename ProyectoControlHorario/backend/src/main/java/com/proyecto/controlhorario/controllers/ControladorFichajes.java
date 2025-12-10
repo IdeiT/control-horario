@@ -69,10 +69,11 @@ public class ControladorFichajes {
  
 
     // // =============================================================
-    // // ✅ ENDPOINT: LISTAR FICHAJES del USUARIO
+    // // ✅ ENDPOINT: LISTAR FICHAJES del USUARIO  ( deberia recibir el numero de pagina y el numero de elementos por pagina )
     // // =============================================================
     @GetMapping("/listarFichajesUsuario")
-    public ResponseEntity<?> listarFichajesUsuario(@RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<?> listarFichajesUsuario(@RequestHeader("Authorization") String authHeader, @RequestParam(required = true, defaultValue = "0") int pagina,
+                                                   @RequestParam(required = true, defaultValue = "10") int elementosPorPagina) {
        try {
             // 1️⃣ Extraer el token (sin "Bearer ")
             String token = authHeader.replace("Bearer ", "");
@@ -85,7 +86,7 @@ public class ControladorFichajes {
 
 
             // 3️⃣ Listar todos fichajes del usuario correspondiente
-            List<ListarFichajeUsuarioResponse> response = servicio.listarFichajesUsuario(username,departamento,rolUsuarioActual);;  
+            List<ListarFichajeUsuarioResponse> response = servicio.listarFichajesUsuario(username,departamento,rolUsuarioActual,pagina,elementosPorPagina);;  
 
             // En Spring Boot, la conversión a JSON es automática gracias a Jackson
             return ResponseEntity

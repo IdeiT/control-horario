@@ -1386,3 +1386,79 @@ function convertirLocalAUTC(instanteLocal) {
     
     return instanteUTC;
 }
+
+
+
+
+// ============================================
+// FUNCIÓN:  CAMBIAR CONTRASEÑA DE USUARIO (SOLO ADMIN)
+// ============================================
+async function cambiarPassword(event) {
+    if (event) event.preventDefault();
+    
+    const authToken = localStorage.getItem('authToken');
+    
+    if (!authToken) {
+        alert('⚠️ No estás autenticado. Redirigiendo al login...');
+        setTimeout(() => window.location.href = 'login.html', 2000);
+        return;
+    }
+    
+    const username = document.getElementById('usernamePassword').value.trim();
+    const nuevaPassword = document.getElementById('nuevaPassword').value;
+
+    // Validaciones
+    if (!username || !nuevaPassword) {
+        alert('⚠️ Por favor completa todos los campos');
+        return;
+    }
+
+    if (username.length < 3) {
+        alert('⚠️ El nombre de usuario debe tener al menos 3 caracteres');
+        return;
+    }
+
+    if (nuevaPassword.length < 8) {
+        alert('⚠️ La contraseña debe tener al menos 8 caracteres');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/general/cambiarPassword`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body:  JSON.stringify({
+                username: username,
+                nuevaPassword:  nuevaPassword
+            })
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) {
+            // Mostrar diálogo con los datos del cambio exitoso
+            mostrarDialogoExito('🔑 CONTRASEÑA CAMBIADA EXITOSAMENTE', {
+                'Usuario': username,
+                'Estado': 'Contraseña actualizada',
+                'Información': 'El usuario debe usar la nueva contraseña en su próximo login'
+            });
+            
+            // Limpiar formulario
+            document.getElementById('cambiarPasswordForm').reset();
+            
+            mostrarRespuesta('cambiarPasswordResponse', data.msg || '✅ Contraseña cambiada correctamente', 'success');
+        } else {
+            alert('❌ ERROR AL CAMBIAR CONTRASEÑA\n\n' + (data.msg || 'Error desconocido'));
+            mostrarRespuesta('cambiarPasswordResponse', data.msg || 'Error al cambiar la contraseña', 'error');
+            if (response.status === 401) {
+                cerrarSesion();
+            }
+        }
+    } catch (error) {
+        alert('❌ ERROR DE CONEXIÓN\n\n' + error.message);
+        mostrarRespuesta('cambiarPasswordResponse', '❌ Error de conexión:  ' + error.message, 'error');
+    }
+}

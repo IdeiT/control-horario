@@ -124,7 +124,7 @@ public class FichajesDAO {
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public List<ListarFichajeUsuarioResponse> listarFichajesUsuario(String username, String departamento) {
+    public List<ListarFichajeUsuarioResponse> listarFichajesUsuario(String username, String departamento, int pagina, int elementosPorPagina) {
         String dbPath = dbFolder+"departamento_"+departamento.toLowerCase()+".db";
         List<ListarFichajeUsuarioResponse> fichajesList = new ArrayList<>();
 
@@ -143,10 +143,13 @@ public class FichajesDAO {
                                 FROM fichajes f
                                 LEFT JOIN ediciones e ON f.id_edicion = e.id
                                 WHERE f.username = ?
-                                ORDER BY id_fichaje DESC;
+                                ORDER BY id_fichaje DESC
+                                LIMIT ? OFFSET ?;
                                 """;
                 try (PreparedStatement st = conn.prepareStatement(query)) {
                     st.setString(1, username);
+                    st.setInt(2, elementosPorPagina);
+                    st.setInt(3, pagina * elementosPorPagina);
                     ResultSet rst = st.executeQuery();
                     while (rst.next()) {
                         idFichaje = rst.getInt("id_fichaje");
