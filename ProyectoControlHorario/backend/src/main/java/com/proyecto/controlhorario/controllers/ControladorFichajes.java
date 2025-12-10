@@ -116,7 +116,8 @@ public class ControladorFichajes {
     // // =============================================================
     // // ✅ ENDPOINT: VERIFICAR INTEGRIDAD DE FICHAJES
     // // =============================================================
-    @GetMapping("/verificarIntegridadFichajes")
+    @GetMapping("/verificarIntegridadFichajes") // deberia recibir el numero de pagina y el numero de elementos por pagina
+    
     public ResponseEntity<?> verificarIntegridadFichajes(@RequestHeader("Authorization") String authHeader, @RequestParam String departamento) {
 
         try {

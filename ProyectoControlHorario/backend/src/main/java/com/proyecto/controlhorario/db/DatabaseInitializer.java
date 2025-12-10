@@ -26,6 +26,12 @@ public class DatabaseInitializer {
     @Value("${app.db.folder}")
     private String dbFolder;
 
+    @Value("${app.db.initData}")
+    private boolean initData;
+
+    @Value("${app.db.adminPassword}")
+    private String adminPassword;
+
     private static final String GENERAL_DB_NAME = "control_general.db";
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
@@ -50,8 +56,13 @@ public class DatabaseInitializer {
                 createDatabaseIfNotExists(dbFolder + dbName, "schema_departamento.sql");
             }
 
+            insertInitialAdmin(dbFolder + GENERAL_DB_NAME);
+
             // Insertar datos iniciales
-            insertInitialData(dbFolder + GENERAL_DB_NAME);
+            if (initData){
+                insertInitialData(dbFolder + GENERAL_DB_NAME);
+            }
+
 
             System.out.println("✅ Todas las bases SQLite se han inicializado correctamente en: " + dbFolder);
 
@@ -122,7 +133,20 @@ public class DatabaseInitializer {
                         VALUES ('Administrador'), ('Auditor'), ('Supervisor'), ('Empleado');
                     """);
 
-                    String passw = "admin";
+                    System.out.println("🧩 Datos iniciales insertados en control_general.db");
+                }
+            });
+        } catch (Exception e) {
+            System.err.println("⚠️ No se pudieron insertar los datos iniciales: " + e.getMessage());
+        }
+    }
+
+
+    private void insertInitialAdmin(String generalDbPath) {
+        try {
+            DatabaseManager.withConnection(generalDbPath, conn -> {
+                try (Statement stmt = conn.createStatement()) {
+                    String passw = adminPassword;
                     String hashedPassw = encoder.encode(passw);
 
                     stmt.executeUpdate(  // Insertando un administrador, porque sino no podre dar de alta a otros usuarios
@@ -137,4 +161,5 @@ public class DatabaseInitializer {
             System.err.println("⚠️ No se pudieron insertar los datos iniciales: " + e.getMessage());
         }
     }
+
 }

@@ -2,6 +2,7 @@ package com.proyecto.controlhorario.dao;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
 import com.proyecto.controlhorario.controllers.dto.AprobarSolicitudResponse;
+import com.proyecto.controlhorario.controllers.dto.IntegridadResponse;
 import com.proyecto.controlhorario.controllers.dto.ListarSolicitudesResponse;
 import com.proyecto.controlhorario.controllers.dto.SolicitudEdicionResponse;
 import com.proyecto.controlhorario.dao.entity.Edicion;
@@ -259,6 +261,54 @@ public class EdicionesDAO {
             e.printStackTrace();
         }
         return solicitudesList;
+    }
+
+
+
+    // Metodo para verificar la integridad de las ediciones en un departamento    /// AUN EN DESARROLLO
+
+    // La cadena de hashes se construye en orden ASC (del más antiguo al más reciente)
+    // Cuando inserto una nueva edicion de un fichaje, cada huella depende de la anterior cronológicamente.
+    public List<IntegridadResponse> verificarIntegridadEdiciones(String departamentoConsultado) {
+        String dbPath = dbFolder+"departamento_"+departamentoConsultado.toLowerCase()+".db";
+        List<IntegridadResponse> toret = new ArrayList<>();
+        
+
+        try {
+            DatabaseManager.withConnection(dbPath, conn -> {
+                String sql = "SELECT id, username, instante, tipo, huella FROM ediciones ORDER BY id ASC";  // Del más antiguo al más reciente
+                                                                     // Si dos fichajes tienen el mismo instante (milisegundo igual), el 
+                                                                     // orden por instante podría ser inconsistente. El id autoincremental 
+                                                                     // garantiza el orden de inserción.
+                try (Statement st = conn.createStatement();
+                    ResultSet rs = st.executeQuery(sql)) {
+
+                    String huellaAnterior = null;
+                    while (rs.next() ) {  
+                        int id = rs.getInt("id");
+                        String usuario = rs.getString("username");
+                        String fechaHora = rs.getString("instante");
+                        String tipo = rs.getString("tipo");
+                        String huellaGuardada = rs.getString("huella");
+
+                        String base = usuario + "|" + fechaHora + "|" + tipo + "|" + (huellaAnterior != null ? huellaAnterior : "GENESIS");
+                        String huellaCalculada = FichajesDAO.generarHash(base);
+
+                        toret.add(new IntegridadResponse(id, usuario, fechaHora, tipo, huellaCalculada)); 
+
+                        if (!huellaCalculada.equals(huellaGuardada)) {
+                            toret.get(toret.size()-1).setMensaje("INCONSISTENCIA DETECTADA");
+                        } else {
+                            toret.get(toret.size()-1).setMensaje("Huella válida");
+                            huellaAnterior = huellaGuardada;
+                        }                   
+                    }
+                }
+            });
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return toret;
     }
 
 }
