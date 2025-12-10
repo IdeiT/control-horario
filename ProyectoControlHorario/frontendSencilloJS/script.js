@@ -292,9 +292,12 @@ async function fichar() {
 }
 
 // ============================================
-// FUNCIÓN: LISTAR FICHAJES DEL USUARIO
+// FUNCIÓN:  LISTAR FICHAJES DEL USUARIO (CON PAGINACIÓN)
 // ============================================
-async function listarFichajes() {
+let paginaActual = 0;
+let elementosPorPagina = 10;
+
+async function listarFichajes(pagina = 0) {
     const authToken = localStorage.getItem('authToken');
     
     if (!authToken) {
@@ -303,8 +306,12 @@ async function listarFichajes() {
         return;
     }
 
+    paginaActual = pagina;
+
     try {
-        const response = await fetch(`${API_BASE_URL}/listarFichajesUsuario`, {
+        const url = `${API_BASE_URL}/listarFichajesUsuario? pagina=${pagina}&elementosPorPagina=${elementosPorPagina}`;
+        
+        const response = await fetch(url, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${authToken}`
@@ -313,8 +320,16 @@ async function listarFichajes() {
 
         if (response.ok) {
             const fichajes = await response.json();
-            mostrarRespuesta('listarResponse', `✅ Se encontraron ${fichajes.length} fichajes`, 'success');
-            mostrarTablaFichajesConEditar(fichajes);
+            
+            if (fichajes.length === 0 && pagina === 0) {
+                mostrarRespuesta('listarResponse', 'ℹ️ No tienes fichajes registrados aún', 'success');
+                document.getElementById('fichajesTable').innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No hay fichajes para mostrar</p>';
+                document.getElementById('paginacionControles').style.display = 'none';
+            } else {
+                mostrarRespuesta('listarResponse', `✅ Mostrando fichajes de la página ${pagina + 1}`, 'success');
+                mostrarTablaFichajesConEditar(fichajes);
+                actualizarControlesPaginacion(fichajes. length);
+            }
         } else {
             const data = await response.json();
             mostrarRespuesta('listarResponse', data.mensaje || 'Error al listar fichajes', 'error');
@@ -323,8 +338,65 @@ async function listarFichajes() {
             }
         }
     } catch (error) {
-        mostrarRespuesta('listarResponse', '❌ Error de conexión: ' + error.message, 'error');
+        mostrarRespuesta('listarResponse', '❌ Error de conexión:  ' + error.message, 'error');
     }
+}
+
+// ============================================
+// FUNCIÓN: ACTUALIZAR CONTROLES DE PAGINACIÓN
+// ============================================
+function actualizarControlesPaginacion(fichajesEnPagina) {
+    const controles = document.getElementById('paginacionControles');
+    
+    if (! controles) return;
+    
+    controles.style.display = 'flex';
+    
+    const hayMasPaginas = fichajesEnPagina === elementosPorPagina;
+    const esLaPrimeraPagina = paginaActual === 0;
+    
+    let html = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; gap: 15px;">
+            <button 
+                class="btn btn-secondary" 
+                onclick="listarFichajes(${paginaActual - 1})" 
+                ${esLaPrimeraPagina ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>
+                ← Anterior
+            </button>
+            
+            <span style="color: #666; font-weight: 500;">
+                Página ${paginaActual + 1} 
+                <span style="font-size: 0.9em; color: #999;">(${fichajesEnPagina} fichaje${fichajesEnPagina !== 1 ? 's' :  ''})</span>
+            </span>
+            
+            <button 
+                class="btn btn-secondary" 
+                onclick="listarFichajes(${paginaActual + 1})" 
+                ${! hayMasPaginas ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>
+                Siguiente →
+            </button>
+        </div>
+        
+        <div style="text-align: center; margin-top: 15px;">
+            <label for="elementosPorPaginaSelect" style="color: #666; margin-right: 10px;">Fichajes por página:</label>
+            <select id="elementosPorPaginaSelect" onchange="cambiarElementosPorPagina(this.value)" style="padding: 5px 10px; border-radius: 5px; border: 1px solid #ddd;">
+                <option value="5" ${elementosPorPagina === 5 ? 'selected' : ''}>5</option>
+                <option value="10" ${elementosPorPagina === 10 ? 'selected' : ''}>10</option>
+                <option value="20" ${elementosPorPagina === 20 ? 'selected' : ''}>20</option>
+                <option value="50" ${elementosPorPagina === 50 ? 'selected' : ''}>50</option>
+            </select>
+        </div>
+    `;
+    
+    controles.innerHTML = html;
+}
+
+// ============================================
+// FUNCIÓN: CAMBIAR ELEMENTOS POR PÁGINA
+// ============================================
+function cambiarElementosPorPagina(nuevoValor) {
+    elementosPorPagina = parseInt(nuevoValor);
+    listarFichajes(0); // Volver a la primera página
 }
 
 // ============================================
