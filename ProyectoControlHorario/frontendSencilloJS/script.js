@@ -309,7 +309,7 @@ async function listarFichajes(pagina = 0) {
     paginaActual = pagina;
 
     try {
-        const url = `${API_BASE_URL}/listarFichajesUsuario? pagina=${pagina}&elementosPorPagina=${elementosPorPagina}`;
+        const url = `${API_BASE_URL}/listarFichajesUsuario?pagina=${pagina}&elementosPorPagina=${elementosPorPagina}`;
         
         const response = await fetch(url, {
             method: 'GET',
