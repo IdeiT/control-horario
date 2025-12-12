@@ -139,7 +139,7 @@ public class ControladorFichajes {
 
             // En Spring Boot, la conversión a JSON es automática gracias a Jackson
             return ResponseEntity
-                    .status(HttpStatus.CREATED)
+                    .status(HttpStatus.OK)
                     .body(response);
         } catch (JwtException e) {
             return ResponseEntity

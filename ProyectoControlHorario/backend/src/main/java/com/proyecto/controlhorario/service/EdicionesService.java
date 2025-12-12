@@ -5,6 +5,8 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.proyecto.controlhorario.controllers.dto.AprobarSolicitudResponse;
+import com.proyecto.controlhorario.controllers.dto.IntegridadEdicionesResponse;
+import com.proyecto.controlhorario.controllers.dto.IntegridadResponse;
 import com.proyecto.controlhorario.controllers.dto.ListarSolicitudesResponse;
 import com.proyecto.controlhorario.controllers.dto.SolicitudEdicionRequest;
 import com.proyecto.controlhorario.controllers.dto.SolicitudEdicionResponse;
@@ -74,6 +76,18 @@ public class EdicionesService {
 
         List<ListarSolicitudesResponse> response = solicitudEdicionDAO.listarSolicitudes(departamento);
         return response;
+    }
+
+    // Nuevo método para verificar integridad de ediciones
+    // Cadena de hashes (similar a blockchain) para detectar manipulaciones no autorizadas en los registros de fichajes
+    public List<IntegridadEdicionesResponse> comprobarIntegridadEdiciones(String departamentoConsultado, String rolUsuarioActual, int pagina, int elementosPorPagina) {
+
+        // ✅ VALIDAR QUE EL USUARIO ACTUAL SEA ADMINISTRADOR O AUDITOR O SUPERVISOR
+        if (!rolUsuarioActual.equals("Administrador") && !rolUsuarioActual.equals("Auditor") && !rolUsuarioActual.equals("Supervisor")) {
+                throw new ForbiddenException("Solo los administradores, auditores y supervisores pueden comprobar la integridad de las ediciones");
+        }
+
+        return solicitudEdicionDAO.verificarIntegridadEdiciones(departamentoConsultado, pagina, elementosPorPagina);
     }
 
 }

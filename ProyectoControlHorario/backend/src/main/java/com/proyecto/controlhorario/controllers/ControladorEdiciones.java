@@ -8,6 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.proyecto.controlhorario.controllers.dto.AprobarSolicitudResponse;
+import com.proyecto.controlhorario.controllers.dto.IntegridadEdicionesResponse;
+import com.proyecto.controlhorario.controllers.dto.IntegridadResponse;
 import com.proyecto.controlhorario.controllers.dto.ListarSolicitudesResponse;
 import com.proyecto.controlhorario.controllers.dto.SolicitudEdicionRequest;
 import com.proyecto.controlhorario.controllers.dto.SolicitudEdicionResponse;
@@ -146,6 +148,53 @@ public class ControladorEdiciones {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error interno: " + e.getMessage());
+        }
+    }
+
+
+    // // =============================================================
+    // // ✅ ENDPOINT: VERIFICAR INTEGRIDAD DE FICHAJES
+    // // =============================================================
+    @GetMapping("/verificarIntegridadEdiciones") // deberia recibir el numero de pagina y el numero de elementos por pagina
+    public ResponseEntity<?> verificarIntegridadEdiciones(@RequestHeader("Authorization") String authHeader, @RequestParam String departamento,@RequestParam(required = true, defaultValue = "0") int pagina,
+                                                            @RequestParam(required = true, defaultValue = "10") int elementosPorPagina) {
+        try {
+            // 1️⃣ Extraer el token (sin "Bearer ")
+            String token = authHeader.replace("Bearer ", "");
+
+            // 2️⃣ Validar token y obtener claims
+            Map<String, Object> claims = JwtUtil.validateToken(token);
+
+            //  Solo los roles de administrador y auditor podran 
+            // comprobar la integridad en las tablas de los departamentos
+            String rol = (String) claims.get("rol");     
+
+        
+
+            // 3️⃣ Llamar al servicio para comprobar integridad
+            List<IntegridadEdicionesResponse> response = servicio.comprobarIntegridadEdiciones(departamento, rol, pagina,elementosPorPagina);;
+        
+
+            // En Spring Boot, la conversión a JSON es automática gracias a Jackson
+            return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(response);
+        } catch (JwtException e) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(new IntegridadEdicionesResponse("Error: " + e.getMessage()));
+        }catch (ForbiddenException e) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(new IntegridadEdicionesResponse("Error: " + e.getMessage()));
+        }catch (IllegalArgumentException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new IntegridadEdicionesResponse("Error: " + e.getMessage()));
+        }catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new IntegridadEdicionesResponse("Error interno: " + e.getMessage()));
         }
     }
 
