@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificar Integridad Ediciones - Control Horario</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">🕐 Control Horario</div>
+        <div class="nav-user" id="navUser">Cargando...</div>
+        <a href="dashboard.html" class="btn btn-secondary btn-sm">← Volver</a>
+    </nav>
+    
+    <div class="container">
+        <div class="card">
+            <h1>🔐 Verificar Integridad de Ediciones</h1>
+            <p class="subtitle">Comprueba la autenticidad de las ediciones mediante blockchain</p>
+            
+            <form onsubmit="verificarIntegridadEdiciones(event)">
+                <div class="form-group">
+                    <label for="departamentoEdiciones">Departamento a Verificar *</label>
+                    <select id="departamentoEdiciones" required>
+                        <option value="">Cargando departamentos...</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">🔍 Verificar Integridad de Ediciones</button>
+            </form>
+            
+            <div id="verificarEdicionesResponse" class="response"></div>
+            
+            <div id="detallesVerificacionEdiciones" style="margin-top: 30px;"></div>
+
+            <!-- ✅ Controles de paginación -->
+            <div id="paginacionControlesIntegridadEdiciones" style="display: none;"></div>
+            
+            <div style="margin-top: 30px; padding: 15px; background-color: #e3f2fd; border-radius:  8px; border-left: 4px solid #2196F3;">
+                <strong>ℹ️ ¿Qué es la verificación de integridad de ediciones?</strong>
+                <p style="margin-top: 10px; color: #555;">
+                    El sistema utiliza una cadena de hashes (blockchain) para garantizar que ninguna 
+                    edición de fichaje haya sido modificada de forma fraudulenta. Cada edición contiene un hash 
+                    que depende de la edición anterior, creando una cadena inmutable. 
+                </p>
+                <ul style="margin-top: 10px; padding-left: 20px; color: #555;">
+                    <li>✅ <strong>Integridad OK: </strong> Todas las ediciones son auténticas</li>
+                    <li>⚠️ <strong>Integridad Comprometida:</strong> Se detectaron modificaciones no autorizadas</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+    <script>
+        // Verificar que el usuario sea administrador, auditor o supervisor
+        if (!verificarSesion()) {
+            window. location.href = 'login. html';
+        } else {
+            verificarRol(['Administrador', 'Auditor', 'Supervisor']);
+            
+            // Mostrar nombre de usuario
+            const datos = obtenerDatosToken();
+            if (datos) {
+                document.getElementById('navUser').textContent = `${datos.username} (${datos.rol})`;
+            }
+
+            // ✅ CARGAR DEPARTAMENTOS DINÁMICAMENTE
+            cargarDepartamentosEdiciones();
+        }
+    </script>
+</body>
+</html>

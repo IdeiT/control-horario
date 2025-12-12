@@ -1632,3 +1632,289 @@ async function cambiarPassword(event) {
         mostrarRespuesta('cambiarPasswordResponse', '❌ Error de conexión:  ' + error.message, 'error');
     }
 }
+
+
+// ============================================
+// FUNCIÓN:  VERIFICAR INTEGRIDAD DE EDICIONES (CON PAGINACIÓN)
+// ============================================
+let paginaActualIntegridadEdiciones = 0;
+let elementosPorPaginaIntegridadEdiciones = 20;
+
+async function verificarIntegridadEdiciones(event, pagina = 0) {
+    if (event) event.preventDefault();
+    
+    const authToken = localStorage.getItem('authToken');
+    
+    if (!authToken) {
+        mostrarRespuesta('verificarEdicionesResponse', '⚠️ No estás autenticado', 'error');
+        setTimeout(() => window.location.href = 'login.html', 2000);
+        return;
+    }
+
+    const departamento = document.getElementById('departamentoEdiciones').value;
+
+    if (!departamento) {
+        mostrarRespuesta('verificarEdicionesResponse', '⚠️ Por favor ingresa un departamento', 'error');
+        return;
+    }
+
+    paginaActualIntegridadEdiciones = pagina;
+
+    mostrarRespuesta('verificarEdicionesResponse', '🔄 Verificando integridad de ediciones, por favor espera...', 'success');
+
+    // Limpiar tabla antes de cargar
+    const container = document.getElementById('detallesVerificacionEdiciones');
+    if (container) {
+        container. innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">🔄 Verificando integridad... </p>';
+    }
+
+    try {
+        const url = `${API_BASE_URL}/verificarIntegridadEdiciones?departamento=${encodeURIComponent(departamento)}&pagina=${pagina}&elementosPorPagina=${elementosPorPaginaIntegridadEdiciones}`;
+        
+        console.log('📡 Verificando integridad de ediciones:', url);
+        
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        const data = await response.json();
+        
+        console.log('📦 Respuesta de verificación de ediciones:', data);
+        
+        if (response.ok) {
+            const responseElement = document.getElementById('verificarEdicionesResponse');
+            if (responseElement) {
+                responseElement.style.display = 'none';
+            }
+            
+            if (data.length === 0 && pagina === 0) {
+                mostrarRespuesta('verificarEdicionesResponse', 'ℹ️ No hay ediciones en este departamento', 'success');
+                if (container) {
+                    container.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No hay ediciones para verificar</p>';
+                }
+                const controles = document.getElementById('paginacionControlesIntegridadEdiciones');
+                if (controles) {
+                    controles.style.display = 'none';
+                }
+            } else if (data.length === 0 && pagina > 0) {
+                // Si estamos en una página mayor que 0 y no hay resultados, volver a la página anterior
+                verificarIntegridadEdiciones(null, pagina - 1);
+            } else {
+                mostrarTablaIntegridadEdiciones(data, departamento);
+                actualizarControlesPaginacionIntegridadEdiciones(data.length, departamento);
+            }
+        } else {
+            mostrarRespuesta('verificarEdicionesResponse', data.mensaje || data.msg || 'Error al verificar integridad de ediciones', 'error');
+            if (container) {
+                container.innerHTML = '<p style="text-align: center; color: #e74c3c; padding: 20px;">❌ Error al verificar integridad</p>';
+            }
+            if (response.status === 401) {
+                cerrarSesion();
+            }
+        }
+    } catch (error) {
+        console.error('Error al verificar integridad de ediciones:', error);
+        mostrarRespuesta('verificarEdicionesResponse', '❌ Error de conexión:  ' + error.message, 'error');
+        if (container) {
+            container.innerHTML = '<p style="text-align: center; color: #e74c3c; padding: 20px;">❌ Error de conexión</p>';
+        }
+    }
+}
+
+// ============================================
+// FUNCIÓN: MOSTRAR TABLA DE INTEGRIDAD DE EDICIONES
+// ============================================
+function mostrarTablaIntegridadEdiciones(ediciones, departamento) {
+    const container = document.getElementById('detallesVerificacionEdiciones');
+    
+    if (! container) return;
+    
+    if (! ediciones || ediciones.length === 0) {
+        container. innerHTML = `
+            <div style="padding: 20px; text-align: center; color:  #666;">
+                <p>No hay ediciones en el departamento <strong>${departamento}</strong></p>
+            </div>
+        `;
+        return;
+    }
+    
+    const edicionesOrdenados = [... ediciones].sort((a, b) => {
+        return (b.id || 0) - (a.id || 0);
+    });
+    
+    let corruptos = 0;
+    let validos = 0;
+    
+    edicionesOrdenados.forEach(e => {
+        const mensaje = (e.mensaje || e.estado || '').toUpperCase();
+        if (mensaje. includes('INCONSISTENCIA') || mensaje.includes('INVÁLIDA')) {
+            corruptos++;
+        } else {
+            validos++;
+        }
+    });
+    
+    const total = edicionesOrdenados. length;
+    const porcentajeValidos = total > 0 ? ((validos / total) * 100).toFixed(1) : 0;
+    const porcentajeCorruptos = total > 0 ? ((corruptos / total) * 100).toFixed(1) : 0;
+    
+    let tableHTML = `
+        <div style="margin-top: 20px;">
+            <h3 style="color: #5e72e4; margin-bottom: 15px;">📊 Detalle de Ediciones (ordenados por ID):</h3>
+            <div style="overflow-x: auto;">
+                <table style="width:  100%; border-collapse: collapse; margin-top: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <thead>
+                        <tr style="background:  #5e72e4; color: white;">
+                            <th style="padding: 12px; text-align: left; border:  1px solid #ddd;">ID</th>
+                            <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Usuario</th>
+                            <th style="padding: 12px; text-align: left; border:  1px solid #ddd;">Fecha y Hora</th>
+                            <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Tipo</th>
+                            <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+    `;
+    
+    edicionesOrdenados.forEach((edicion, index) => {
+        const esValido = !(edicion.mensaje || '').toUpperCase().includes('INCONSISTENCIA');
+        const bgColor = index % 2 === 0 ? '#f8f9fa' : 'white';
+        const estadoColor = esValido ? '#28a745' : '#dc3545';
+        const estadoIcono = esValido ? '✅' : '⚠️';
+        const estadoTexto = esValido ? 'Huella válida' : 'INCONSISTENCIA DETECTADA';
+        
+        tableHTML += `
+            <tr style="background: ${bgColor};">
+                <td style="padding:  10px; border: 1px solid #ddd;"><strong>${edicion.id}</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${edicion.usuario || 'N/A'}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${formatearFechaLocal(edicion.fechaHora) || 'N/A'}</td>
+                <td style="padding: 10px; border:  1px solid #ddd;"><span style="background: #e3f2fd; padding: 4px 8px; border-radius: 4px; font-weight: 500;">${edicion. tipo || 'N/A'}</span></td>
+                <td style="padding: 10px; border: 1px solid #ddd; color: ${estadoColor}; font-weight: bold;">
+                    ${estadoIcono} ${estadoTexto}
+                </td>
+            </tr>
+        `;
+    });
+    
+    tableHTML += `
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div style="margin-top: 30px; padding: 20px; background:  linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; color: white;">
+            <h3 style="margin-bottom: 15px;">📋 Resumen de Verificación:</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <div style="background:  rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 0.9em; opacity: 0.9;">Ediciones válidas</div>
+                    <div style="font-size:  2em; font-weight: bold; margin-top: 5px;">✅ ${validos} (${porcentajeValidos}%)</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 0.9em; opacity: 0.9;">Ediciones con inconsistencias</div>
+                    <div style="font-size: 2em; font-weight: bold; margin-top: 5px;">⚠️ ${corruptos} (${porcentajeCorruptos}%)</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 0.9em; opacity: 0.9;">Total de ediciones</div>
+                    <div style="font-size:  2em; font-weight:  bold; margin-top: 5px;">📊 ${total}</div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML = tableHTML;
+}
+
+// ============================================
+// FUNCIÓN: ACTUALIZAR CONTROLES DE PAGINACIÓN INTEGRIDAD EDICIONES
+// ============================================
+function actualizarControlesPaginacionIntegridadEdiciones(edicionesEnPagina, departamento) {
+    const controles = document.getElementById('paginacionControlesIntegridadEdiciones');
+    
+    if (!controles) {
+        console.warn('⚠️ No se encontró el elemento paginacionControlesIntegridadEdiciones');
+        return;
+    }
+    
+    controles.style.display = 'block';
+    
+    const hayMasPaginas = edicionesEnPagina === elementosPorPaginaIntegridadEdiciones;
+    const esLaPrimeraPagina = paginaActualIntegridadEdiciones === 0;
+    
+    let html = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; gap: 15px; flex-wrap: wrap;">
+            <button 
+                class="btn btn-secondary" 
+                onclick="verificarIntegridadEdiciones(null, ${paginaActualIntegridadEdiciones - 1})" 
+                ${esLaPrimeraPagina ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' :  ''}>
+                ← Anterior
+            </button>
+            
+            <span style="color: #666; font-weight: 500;">
+                Página ${paginaActualIntegridadEdiciones + 1} 
+                <span style="font-size: 0.9em; color: #999;">(${edicionesEnPagina} edición${edicionesEnPagina !== 1 ? 'es' : ''})</span>
+            </span>
+            
+            <button 
+                class="btn btn-secondary" 
+                onclick="verificarIntegridadEdiciones(null, ${paginaActualIntegridadEdiciones + 1})" 
+                ${! hayMasPaginas ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>
+                Siguiente →
+            </button>
+        </div>
+        
+        <div style="text-align: center; margin-top: 15px;">
+            <label for="elementosPorPaginaIntegridadEdicionesSelect" style="color: #666; margin-right: 10px;">Ediciones por página:</label>
+            <select id="elementosPorPaginaIntegridadEdicionesSelect" onchange="cambiarElementosPorPaginaIntegridadEdiciones(this.value, '${departamento}')" style="padding: 5px 10px; border-radius: 5px; border: 1px solid #ddd;">
+                <option value="10" ${elementosPorPaginaIntegridadEdiciones === 10 ? 'selected' :  ''}>10</option>
+                <option value="20" ${elementosPorPaginaIntegridadEdiciones === 20 ? 'selected' : ''}>20</option>
+                <option value="50" ${elementosPorPaginaIntegridadEdiciones === 50 ? 'selected' : ''}>50</option>
+                <option value="100" ${elementosPorPaginaIntegridadEdiciones === 100 ? 'selected' : ''}>100</option>
+            </select>
+        </div>
+    `;
+    
+    controles.innerHTML = html;
+}
+
+// ============================================
+// FUNCIÓN: CAMBIAR ELEMENTOS POR PÁGINA INTEGRIDAD EDICIONES
+// ============================================
+function cambiarElementosPorPaginaIntegridadEdiciones(nuevoValor, departamento) {
+    elementosPorPaginaIntegridadEdiciones = parseInt(nuevoValor);
+    console.log('📊 Elementos por página (integridad ediciones) cambiados a:', elementosPorPaginaIntegridadEdiciones);
+    verificarIntegridadEdiciones(null, 0); // Volver a la primera página
+}
+
+// ============================================
+// FUNCIÓN: CARGAR DEPARTAMENTOS EN SELECT DE EDICIONES
+// ============================================
+async function cargarDepartamentosEdiciones() {
+    const authToken = localStorage.getItem('authToken');
+    const selectDepartamento = document.getElementById('departamentoEdiciones');
+    
+    if (!authToken || ! selectDepartamento) return;
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/general/listarDepartamentos`, {
+            method: 'GET',
+            headers: {
+                'Authorization':  `Bearer ${authToken}`
+            }
+        });
+        
+        if (response.ok) {
+            const departamentos = await response.json();
+            selectDepartamento.innerHTML = '<option value="">Selecciona un departamento</option>';
+            departamentos.forEach(dep => {
+                const option = document.createElement('option');
+                option.value = dep.nombre;
+                option.textContent = dep.nombre;
+                selectDepartamento.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error al cargar departamentos:', error);
+    }
+}
