@@ -1052,89 +1052,6 @@ function mostrarTablaIntegridad(fichajes, departamento) {
 
 
 // ============================================
-// FUNCIÓN: MOSTRAR TABLA DE SOLICITUDES
-// ============================================
-function mostrarTablaSolicitudes(solicitudes) {
-    const tableContainer = document.getElementById('solicitudesTable');
-    
-    if (!tableContainer) return;
-    
-    if (! solicitudes || solicitudes.length === 0) {
-        tableContainer.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No hay solicitudes pendientes</p>';
-        return;
-    }
-
-    let tableHTML = `
-        <table>
-            <thead>
-                <tr>
-                    <th>ID Solicitud</th>
-                    <th>Usuario</th>
-                    <th>Nuevo Instante</th>
-                    <th>Tipo</th>
-                    <th>Estado</th>
-                    <th>Acción</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
-
-    solicitudes.forEach(sol => {
-        const id = sol.id || '-';
-        const username = sol.username || sol.usuario || 'N/A';  // ← NUEVO CAMPO
-
-        const nuevoInstanteUTC = sol.nuevo_instante || sol.nuevoInstante || 'N/A';
-        const nuevoInstante = formatearFechaLocal(nuevoInstanteUTC);
-
-        const tipo = sol. tipo || 'N/A';
-        const aprobado = sol.aprobado;
-        
-        let estaAprobado = false;
-        
-        if (typeof aprobado === 'boolean') {
-            estaAprobado = aprobado === true;
-        } else if (typeof aprobado === 'string') {
-            const aprobadoUpper = aprobado.toUpperCase(). trim();
-            estaAprobado = aprobadoUpper === 'VERDADERO' || 
-                          aprobadoUpper === 'TRUE' || 
-                          aprobadoUpper === 'SI' || 
-                          aprobadoUpper === 'YES' ||
-                          aprobadoUpper === '1';
-        } else if (typeof aprobado === 'number') {
-            estaAprobado = aprobado === 1;
-        }
-        
-        const botonAprobar = ! estaAprobado
-            ? `<button class="btn btn-success btn-sm" onclick="aprobarSolicitud(${id})">✓ Aprobar</button>`
-            : `<span style="color: #28a745; font-weight: bold;">✅ Aprobada</span>`;
-        
-        const estadoTexto = ! estaAprobado 
-            ? '<span style="color: #ffc107;">⏳ Pendiente</span>' 
-            : '<span style="color: #28a745;">✅ Aprobada</span>';
-        
-        const estiloFila = estaAprobado ?  'style="opacity: 0.6; background-color: #f0f0f0;"' : '';
-        
-        tableHTML += `
-            <tr ${estiloFila}>
-                <td>${id}</td>
-                <td><strong style="color: #495057;">${username}</strong></td>
-                <td>${nuevoInstante}</td>
-                <td><strong>${tipo}</strong></td>
-                <td>${estadoTexto}</td>
-                <td>${botonAprobar}</td>
-            </tr>
-        `;
-    });
-
-    tableHTML += `
-            </tbody>
-        </table>
-    `;
-
-    tableContainer.innerHTML = tableHTML;
-}
-
-// ============================================
 // FUNCIÓN: MOSTRAR TABLA DE FICHAJES DEL USUARIO (CON BOTÓN EDITAR Y ESTADOS)
 // ============================================
 function mostrarTablaFichajesConEditar(fichajes) {
@@ -1328,49 +1245,6 @@ function abrirFormularioEdicion(idFichaje, instante, tipo) {
     window.location.href = 'editar.html';
 }
 
-// ============================================
-// FUNCIÓN: CARGAR FICHAJES PARA EDITAR
-// ============================================
-async function cargarFichajesParaEditar() {
-    const authToken = localStorage.getItem('authToken');
-    
-    if (! authToken) {
-        mostrarRespuesta('edicionResponse', '⚠️ No estás autenticado', 'error');
-        setTimeout(() => window.location.href = 'login.html', 2000);
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/listarFichajesUsuario`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${authToken}`
-            }
-        });
-
-        if (response.ok) {
-            const fichajes = await response.json();
-            poblarSelectFichajes(fichajes);
-        } else {
-            const data = await response.json();
-            const select = document.getElementById('fichajeSelect');
-            if (select) {
-                select.innerHTML = '<option value="">Error al cargar fichajes</option>';
-            }
-            mostrarRespuesta('edicionResponse', 'Error al cargar fichajes: ' + (data.mensaje || 'Error desconocido'), 'error');
-            if (response.status === 401) {
-                cerrarSesion();
-            }
-        }
-    } catch (error) {
-        console.error('Error al cargar fichajes:', error);
-        const select = document.getElementById('fichajeSelect');
-        if (select) {
-            select.innerHTML = '<option value="">Error de conexión</option>';
-        }
-        mostrarRespuesta('edicionResponse', '❌ Error de conexión: ' + error.message, 'error');
-    }
-}
 
 // ============================================
 // FUNCIÓN: POBLAR SELECT DE FICHAJES
@@ -1673,27 +1547,6 @@ function formatearFechaLocal(instanteBackend) {
         hour12: false
     });
 }
-
-/**
- * Obtiene la zona horaria del navegador (para debugging/logs)
- * 
- * @returns {string} - Ejemplo: "Europe/Madrid", "America/New_York"
- */
-function obtenerTimezoneLocal() {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone;
-}
-
-/**
- * Obtiene el offset UTC del navegador (para debugging)
- * 
- * @returns {string} - Ejemplo: "UTC+1", "UTC-5"
- */
-function obtenerOffsetLocal() {
-    const offset = -(new Date(). getTimezoneOffset() / 60);
-    return `UTC${offset >= 0 ?  '+' : ''}${offset}`;
-}
-
-
 
 
 
