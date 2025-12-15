@@ -285,8 +285,8 @@ public class UsuarioDAO {
         try {
             DatabaseManager.withConnection(dbPath, conn -> {
                 String sql = "SELECT username, roles.nombre as rol, departamentos.nombre as departamento " +
-                                      "FROM usuarios JOIN roles ON usuarios.rol_id = roles.id " +
-                                                    "JOIN departamentos ON usuarios.departamento_id = departamentos.id ORDER BY username";
+                                      "FROM usuarios LEFT JOIN roles ON usuarios.rol_id = roles.id " +
+                                                    "LEFT JOIN departamentos ON usuarios.departamento_id = departamentos.id ORDER BY username";
                 try (PreparedStatement stmt = conn.prepareStatement(sql);
                     ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
@@ -294,9 +294,9 @@ public class UsuarioDAO {
                         String rol = rs. getString("rol");
                         String departamento = rs.getString("departamento");
                         
-                        // Si el departamento es null o vacío, mostrar "N/A"
-                        if (departamento == null || departamento. isEmpty()) {
-                            departamento = "N/A";
+                        // Si el departamento es null, mostrar "Sin departamento"
+                        if (departamento == null || departamento.isEmpty()) {
+                            departamento = "Sin departamento";
                         }
                         
                         usuarios.add(new ListarUsuarioResponse(username, rol, departamento));
