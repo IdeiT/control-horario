@@ -221,27 +221,17 @@ public class FichajesDAO {
 
                     String huellaAnterior = null;
                     while (rs.next()) {  
-                        String fechaHora_response;   // Valor que se mostrara en el Frontend, pero internamente sigo 
-                                                    // calculando la huella con el instante original
-                        String instanteEdicion = rs.getString("edic_inst");
-                        if(instanteEdicion != null){
-                            // El fichaje fue editado, usar el instante editado
-                            fechaHora_response = instanteEdicion;
-                        } else {
-                            // No fue editado, usar el instante original
-                            fechaHora_response = rs.getString("fich_inst");
-                        }
                         int id = rs.getInt("id");
                         String usuario = rs.getString("username");
-                        String fechaHora = rs.getString("fich_inst");
+                        String fechaHora_Original = rs.getString("fich_inst");
+                        String fechaHora_Editada = rs.getString("edic_inst");
                         String tipo = rs.getString("tipo");
                         String huellaGuardada = rs.getString("huella");
 
-                        String base = usuario + "|" + fechaHora + "|" + tipo + "|" + (huellaAnterior != null ? huellaAnterior : "GENESIS");
+                        String base = usuario + "|" + fechaHora_Original + "|" + tipo + "|" + (huellaAnterior != null ? huellaAnterior : "GENESIS");
                         String huellaCalculada = generarHash(base);
-
-                             
-                        toret.add(new IntegridadResponse(id, usuario, fechaHora_response, tipo, huellaCalculada)); 
+                          
+                        toret.add(new IntegridadResponse(id, usuario, fechaHora_Original, fechaHora_Editada, tipo, huellaCalculada)); 
 
                         if (!huellaCalculada.equals(huellaGuardada)) {
                             toret.get(toret.size()-1).setMensaje("INCONSISTENCIA DETECTADA");

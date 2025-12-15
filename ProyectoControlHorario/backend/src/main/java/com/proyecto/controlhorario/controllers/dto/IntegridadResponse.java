@@ -4,17 +4,19 @@ public class IntegridadResponse {
 
     private int id;
     private String username;
-    private String instante;
+    private String fechaHora_editado; 
+    private String fechaHora_original; 
     private String tipo;
     private String huella;
     private String mensaje;
 
     public IntegridadResponse() {}
 
-    public IntegridadResponse(int id, String username, String instante, String tipo, String huella) {
+    public IntegridadResponse(int id, String username, String fechaHora_original, String fechaHora_editado, String tipo, String huella) {
         this.id = id;
         this.username = username;
-        this.instante = instante;
+        this.fechaHora_original = fechaHora_original;
+        this.fechaHora_editado = fechaHora_editado;
         this.tipo = tipo;
         this.huella = huella;
     }
@@ -35,10 +37,6 @@ public class IntegridadResponse {
         return username;
     }
 
-    public String getInstante() {
-        return instante;
-    }
-
     public String getTipo() {
         return tipo;
     }
@@ -53,9 +51,7 @@ public class IntegridadResponse {
     public void setUsername(String username) {
         this.username = username;
     }
-    public void setInstante(String instante) {
-        this.instante = instante;
-    }
+
     public void setTipo(String tipo) {
         this.tipo = tipo;
     }
@@ -65,4 +61,18 @@ public class IntegridadResponse {
     public void setMensaje(String mensaje) {
         this.mensaje = mensaje;
     }
+
+    public String getFechaHora_editado() {
+        return fechaHora_editado;
+    }
+    public void setFechaHora_editado(String fechaHora_editado) {
+        this.fechaHora_editado = fechaHora_editado;
+    }
+    public String getFechaHora_original() {
+        return fechaHora_original;
+    }
+    public void setFechaHora_original(String fechaHora_original) {
+        this.fechaHora_original = fechaHora_original;
+    }
+    
 }
