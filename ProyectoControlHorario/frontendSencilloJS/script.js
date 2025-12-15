@@ -901,12 +901,12 @@ function cambiarElementosPorPaginaIntegridad(nuevoValor, departamento) {
 // FUNCIÓN: MOSTRAR TABLA DE INTEGRIDAD
 // ============================================
 function mostrarTablaIntegridad(fichajes, departamento) {
-    const container = document. getElementById('detallesVerificacion');
+    const container = document.getElementById('detallesVerificacion');
     
     if (!container) return;
     
-    if (! fichajes || fichajes.length === 0) {
-        container. innerHTML = `
+    if (!  fichajes || fichajes.length === 0) {
+        container.  innerHTML = `
             <div style="padding: 20px; text-align: center; color: #666;">
                 <p>No hay fichajes en el departamento <strong>${departamento}</strong></p>
             </div>
@@ -914,7 +914,7 @@ function mostrarTablaIntegridad(fichajes, departamento) {
         return;
     }
     
-    const fichajesOrdenados = [...fichajes].sort((a, b) => {
+    const fichajesOrdenados = [... fichajes].sort((a, b) => {
         return (b.id || 0) - (a.id || 0);
     });
     
@@ -926,9 +926,9 @@ function mostrarTablaIntegridad(fichajes, departamento) {
         
         if (mensaje.includes('INCONSISTENCIA') || 
             mensaje.includes('CORRUPTO') || 
-            mensaje. includes('COMPROMETID') ||
+            mensaje.  includes('COMPROMETID') ||
             mensaje.includes('INVÁLIDO') ||
-            mensaje.includes('ERROR') ||
+            mensaje. includes('ERROR') ||
             mensaje.includes('DETECTADA')) {
             corruptos++;
         } else {
@@ -955,7 +955,7 @@ function mostrarTablaIntegridad(fichajes, departamento) {
         headerHTML = `
             <div style="background: #f8d7da; border: 2px solid #dc3545; border-radius: 8px; padding:  20px; margin-bottom:  20px; text-align:  center;">
                 <div style="font-size: 3em; margin-bottom: 10px;">⚠️</div>
-                <h2 style="color:  #721c24; margin: 0;">¡Integridad Comprometida!</h2>
+                <h2 style="color:   #721c24; margin: 0;">¡Integridad Comprometida!</h2>
                 <p style="color: #721c24; margin-top: 10px;">
                     Se detectaron <strong>${corruptos}</strong> fichaje(s) con inconsistencias de un total de 
                     <strong>${totalFichajes}</strong> en el departamento <strong>${departamento}</strong>.
@@ -968,16 +968,17 @@ function mostrarTablaIntegridad(fichajes, departamento) {
         ${headerHTML}
         <h3 style="margin-bottom: 15px;">📊 Detalle de Fichajes (ordenados por ID):</h3>
         <div style="overflow-x: auto;">
-            <table style="width:  100%; border-collapse: collapse; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <table style="width:   100%; border-collapse: collapse; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                 <thead>
                     <tr style="background: #5e72e4; color: white;">
-                        <th style="padding: 12px; text-align: center; border:  1px solid #ddd;">ID</th>
-                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Usuario</th>
-                        <th style="padding: 12px; text-align: left; border:  1px solid #ddd;">Fecha/Hora Original</th>
-                        <th style="padding: 12px; text-align: left; border:  1px solid #ddd;">Fecha/Hora Editada</th>
-                        <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">Tipo</th>
-                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd; min-width: 200px;">Huella (Hash)</th>
-                        <th style="padding: 12px; text-align: center; border:  1px solid #ddd;">Estado</th>
+                        <th style="padding: 12px; text-align: center; border:   1px solid #ddd;">ID</th>
+                        <th style="padding: 12px; text-align: left; border:  1px solid #ddd;">Usuario</th>
+                        <th style="padding: 12px; text-align: left; border:   1px solid #ddd;">Fecha/Hora Original</th>
+                        <th style="padding: 12px; text-align: left; border:   1px solid #ddd;">Fecha/Hora Editada</th>
+                        <th style="padding: 12px; text-align: center; border:  1px solid #ddd;">Tipo</th>
+                        <th style="padding: 12px; text-align: left; border:  1px solid #ddd; min-width: 250px;">Huella Guardada</th>
+                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd; min-width: 250px;">Huella Calculada</th>
+                        <th style="padding: 12px; text-align: center; border:   1px solid #ddd;">Estado</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -987,7 +988,6 @@ function mostrarTablaIntegridad(fichajes, departamento) {
         const id = fichaje.id || '-';
         const username = fichaje.username || fichaje.usuario || 'N/A';
 
-        // ✅ NUEVO: Obtener ambos instantes
         const instanteOriginalUTC = fichaje.fechaHora_original || fichaje.instante || 'N/A';
         const instanteOriginal = formatearFechaLocal(instanteOriginalUTC);
 
@@ -996,58 +996,76 @@ function mostrarTablaIntegridad(fichajes, departamento) {
 
         const tipo = fichaje.tipo || 'N/A';
         
-        // ✅ NUEVO:  Obtener la huella completa
-        const huella = fichaje. huella || 'N/A';
-        const huellaAbreviada = huella.length > 16 ? huella.substring(0, 16) + '...' : huella;
+        // ✅ NUEVO:   Obtener huellaGuardada y huellaCalculada
+        const huellaGuardada = fichaje.huellaGuardada || 'N/A';
+        const huellaCalculada = fichaje.huellaCalculada || 'N/A';
+        
+        const huellaGuardadaAbreviada = huellaGuardada.length > 16 ? huellaGuardada.substring(0, 16) + '...' : huellaGuardada;
+        const huellaCalculadaAbreviada = huellaCalculada.length > 16 ? huellaCalculada.substring(0, 16) + '...' : huellaCalculada;
+        
+        // ✅ Comparar huellas
+        const huellasCoinciden = (huellaGuardada === huellaCalculada);
         
         const mensaje = fichaje.mensaje || fichaje.estado || 'Estado desconocido';
-        
         const mensajeUpper = mensaje.toUpperCase();
-        const esCorrupto = mensajeUpper. includes('INCONSISTENCIA') || 
+        const esCorrupto = mensajeUpper.  includes('INCONSISTENCIA') || 
                           mensajeUpper.includes('CORRUPTO') || 
                           mensajeUpper.includes('COMPROMETID') ||
-                          mensajeUpper. includes('INVÁLIDO') ||
+                          mensajeUpper.  includes('INVÁLIDO') ||
                           mensajeUpper.includes('ERROR') ||
                           mensajeUpper.includes('DETECTADA');
         
         const estadoHTML = esCorrupto 
-            ? `<span style="background: #f8d7da; color: #721c24; padding:  6px 12px; border-radius: 4px; font-weight: bold; display: inline-block;">⚠️ ${mensaje}</span>`
-            : `<span style="background: #d4edda; color: #155724; padding: 6px 12px; border-radius: 4px; font-weight: bold; display: inline-block;">✅ ${mensaje}</span>`;
+            ? `<span style="background: #f8d7da; color: #721c24; padding:   6px 12px; border-radius: 4px; font-weight: bold; display: inline-block;">⚠️ ${mensaje}</span>`
+            : `<span style="background: #d4edda; color: #155724; padding:  6px 12px; border-radius: 4px; font-weight: bold; display: inline-block;">✅ ${mensaje}</span>`;
         
         const bgColor = index % 2 === 0 ? '#f8f9fa' : 'white';
         const estiloFila = esCorrupto 
             ? `background-color: #fff5f5; border-left: 4px solid #dc3545;`
             : `background-color: ${bgColor};`;
         
-        // ✅ NUEVO:  Mostrar instante editado si existe
         let celdaInstanteEditado = '';
         if (instanteEditado) {
-            celdaInstanteEditado = `
-                <span style="color: #007bff; font-weight: 500;">
-                    ${instanteEditado}
-                </span>
-            `;
+            celdaInstanteEditado = `<span style="color: #007bff; font-weight: 500;">${instanteEditado}</span>`;
         } else {
             celdaInstanteEditado = `<span style="color: #999; font-style: italic;">Sin edición</span>`;
         }
+        
+        // ✅ NUEVO:  Estilos visuales para comparación de huellas
+        const estiloHuellaGuardada = huellasCoinciden 
+            ? 'background-color: #d4edda; border:  1px solid #28a745;' 
+            : 'background-color: #f8d7da; border: 1px solid #dc3545;';
+            
+        const estiloHuellaCalculada = huellasCoinciden 
+            ? 'background-color: #d4edda; border: 1px solid #28a745;' 
+            : 'background-color:  #f8d7da; border: 1px solid #dc3545;';
 
         tableHTML += `
             <tr style="${estiloFila}">
-                <td style="padding: 10px; border: 1px solid #ddd; text-align:  center;"><strong>${id}</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd; text-align:   center;"><strong>${id}</strong></td>
                 <td style="padding: 10px; border: 1px solid #ddd;">${username}</td>
                 <td style="padding: 10px; border: 1px solid #ddd;">
                     <span style="color: #333;">${instanteOriginal}</span>
                 </td>
-                <td style="padding: 10px; border:  1px solid #ddd;">
+                <td style="padding: 10px; border:   1px solid #ddd;">
                     ${celdaInstanteEditado}
                 </td>
                 <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">
                     <strong style="background: #e3f2fd; padding: 4px 8px; border-radius: 4px;">${tipo}</strong>
                 </td>
-                <td style="padding: 10px; border:  1px solid #ddd; font-family: 'Courier New', monospace; font-size: 0.85em; color: #333; word-break: break-all;">
-                    <span title="${huella}" style="cursor: help;">${huellaAbreviada}</span>
+                <td style="padding: 8px; border:   1px solid #ddd;">
+                    <div style="${estiloHuellaGuardada} padding: 8px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 0.8em; word-break: break-all;">
+                        <div style="font-weight: bold; margin-bottom: 4px; color: #555;">💾 Guardada: </div>
+                        <span title="${huellaGuardada}" style="cursor: help;">${huellaGuardadaAbreviada}</span>
+                    </div>
                 </td>
-                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${estadoHTML}</td>
+                <td style="padding: 8px; border:  1px solid #ddd;">
+                    <div style="${estiloHuellaCalculada} padding: 8px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 0.8em; word-break: break-all;">
+                        <div style="font-weight: bold; margin-bottom: 4px; color:  #555;">🔢 Calculada:</div>
+                        <span title="${huellaCalculada}" style="cursor: help;">${huellaCalculadaAbreviada}</span>
+                    </div>
+                </td>
+                <td style="padding: 10px; border:  1px solid #ddd; text-align: center;">${estadoHTML}</td>
             </tr>
         `;
     });
@@ -1058,11 +1076,11 @@ function mostrarTablaIntegridad(fichajes, departamento) {
         </div>
     `;
     
-    const porcentajeValidos = totalFichajes > 0 ?  ((validos / totalFichajes) * 100).toFixed(1) : 0;
-    const porcentajeCorruptos = totalFichajes > 0 ?  ((corruptos / totalFichajes) * 100).toFixed(1) : 0;
+    const porcentajeValidos = totalFichajes > 0 ?   ((validos / totalFichajes) * 100).toFixed(1) : 0;
+    const porcentajeCorruptos = totalFichajes > 0 ?   ((corruptos / totalFichajes) * 100).toFixed(1) : 0;
     
     tableHTML += `
-        <div style="margin-top: 20px; padding: 20px; background-color: ${integridadOK ? '#e7f3ff' : '#fff3cd'}; border-radius:  8px; border-left: 4px solid ${integridadOK ? '#2196F3' : '#ffc107'};">
+        <div style="margin-top:  20px; padding: 20px; background-color: ${integridadOK ? '#e7f3ff' : '#fff3cd'}; border-radius:   8px; border-left: 4px solid ${integridadOK ? '#2196F3' : '#ffc107'};">
             <strong>📈 Resumen de Verificación:</strong>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
                 <div>
@@ -1075,7 +1093,7 @@ function mostrarTablaIntegridad(fichajes, departamento) {
                 </div>
                 <div>
                     <div style="font-size: 0.9em; color: #666;">Total de fichajes</div>
-                    <div style="font-size:  1.5em; font-weight: bold; color: #333;">📊 ${totalFichajes}</div>
+                    <div style="font-size:   1.5em; font-weight: bold; color: #333;">📊 ${totalFichajes}</div>
                 </div>
             </div>
         </div>
@@ -1766,7 +1784,7 @@ function mostrarTablaIntegridadEdiciones(ediciones, departamento) {
         return;
     }
     
-    const edicionesOrdenados = [...ediciones].sort((a, b) => {
+    const edicionesOrdenados = [... ediciones].sort((a, b) => {
         return (b.id || 0) - (a.id || 0);
     });
     
@@ -1785,13 +1803,13 @@ function mostrarTablaIntegridadEdiciones(ediciones, departamento) {
     const total = edicionesOrdenados. length;
     const integridadOK = corruptos === 0;
     
-    // ✅ NUEVO: Header igual que en Fichajes
+    // ✅ Header igual que en Fichajes
     let headerHTML = '';
     if (integridadOK) {
         headerHTML = `
-            <div style="background:  #d4edda; border: 2px solid #28a745; border-radius: 8px; padding: 20px; margin-bottom: 20px; text-align: center;">
+            <div style="background: #d4edda; border: 2px solid #28a745; border-radius: 8px; padding: 20px; margin-bottom: 20px; text-align: center;">
                 <div style="font-size: 3em; margin-bottom: 10px;">✅</div>
-                <h2 style="color: #155724; margin: 0;">¡Integridad Verificada!</h2>
+                <h2 style="color:  #155724; margin: 0;">¡Integridad Verificada!</h2>
                 <p style="color: #155724; margin-top: 10px;">
                     Todas las <strong>${total}</strong> ediciones del departamento 
                     <strong>${departamento}</strong> son válidas y auténticas.
@@ -1800,10 +1818,10 @@ function mostrarTablaIntegridadEdiciones(ediciones, departamento) {
         `;
     } else {
         headerHTML = `
-            <div style="background: #f8d7da; border: 2px solid #dc3545; border-radius: 8px; padding: 20px; margin-bottom: 20px; text-align: center;">
+            <div style="background: #f8d7da; border:  2px solid #dc3545; border-radius: 8px; padding: 20px; margin-bottom: 20px; text-align: center;">
                 <div style="font-size: 3em; margin-bottom: 10px;">⚠️</div>
-                <h2 style="color:  #721c24; margin: 0;">¡Integridad Comprometida!</h2>
-                <p style="color:  #721c24; margin-top: 10px;">
+                <h2 style="color: #721c24; margin: 0;">¡Integridad Comprometida!</h2>
+                <p style="color: #721c24; margin-top: 10px;">
                     Se detectaron <strong>${corruptos}</strong> edición(es) con inconsistencias de un total de 
                     <strong>${total}</strong> en el departamento <strong>${departamento}</strong>.
                 </p>
@@ -1818,13 +1836,14 @@ function mostrarTablaIntegridadEdiciones(ediciones, departamento) {
             <table style="width:  100%; border-collapse: collapse; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                 <thead>
                     <tr style="background: #5e72e4; color: white;">
-                        <th style="padding:  12px; text-align:  center; border:  1px solid #ddd;">ID</th>
-                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Usuario</th>
-                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Fecha/Hora Original</th>
+                        <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">ID</th>
+                        <th style="padding:  12px; text-align:  left; border: 1px solid #ddd;">Usuario</th>
+                        <th style="padding:  12px; text-align:  left; border: 1px solid #ddd;">Fecha/Hora Original</th>
                         <th style="padding: 12px; text-align: left; border:  1px solid #ddd;">Fecha/Hora Editada</th>
                         <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">Tipo</th>
-                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd; min-width: 200px;">Huella (Hash)</th>
-                        <th style="padding: 12px; text-align: center; border:  1px solid #ddd;">Estado</th>
+                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd; min-width: 250px;">Huella Guardada</th>
+                        <th style="padding: 12px; text-align: left; border:  1px solid #ddd; min-width: 250px;">Huella Calculada</th>
+                        <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">Estado</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -1843,13 +1862,19 @@ function mostrarTablaIntegridadEdiciones(ediciones, departamento) {
         
         const tipo = edicion.tipo || 'N/A';
         
-        // Obtener la huella completa
-        const huella = edicion.huella || 'N/A';
-        const huellaAbreviada = huella.length > 16 ? huella.substring(0, 16) + '...' : huella;
+        // ✅ NUEVO:  Obtener huellaGuardada y huellaCalculada
+        const huellaGuardada = edicion.huellaGuardada || 'N/A';
+        const huellaCalculada = edicion.huellaCalculada || 'N/A';
+        
+        const huellaGuardadaAbreviada = huellaGuardada.length > 16 ? huellaGuardada.substring(0, 16) + '...' : huellaGuardada;
+        const huellaCalculadaAbreviada = huellaCalculada.length > 16 ? huellaCalculada.substring(0, 16) + '...' : huellaCalculada;
+        
+        // ✅ Comparar huellas
+        const huellasCoinciden = (huellaGuardada === huellaCalculada);
         
         const mensaje = edicion.mensaje || edicion.estado || 'Estado desconocido';
         const mensajeUpper = mensaje.toUpperCase();
-        const esCorrupto = mensajeUpper. includes('INCONSISTENCIA') || 
+        const esCorrupto = mensajeUpper.includes('INCONSISTENCIA') || 
                           mensajeUpper.includes('CORRUPTO') || 
                           mensajeUpper.includes('COMPROMETID') ||
                           mensajeUpper.includes('INVÁLIDO') ||
@@ -1857,7 +1882,7 @@ function mostrarTablaIntegridadEdiciones(ediciones, departamento) {
                           mensajeUpper.includes('DETECTADA');
         
         const estadoHTML = esCorrupto 
-            ? `<span style="background: #f8d7da; color: #721c24; padding: 6px 12px; border-radius: 4px; font-weight: bold; display: inline-block;">⚠️ ${mensaje}</span>`
+            ? `<span style="background: #f8d7da; color: #721c24; padding:  6px 12px; border-radius: 4px; font-weight: bold; display: inline-block;">⚠️ ${mensaje}</span>`
             : `<span style="background: #d4edda; color: #155724; padding: 6px 12px; border-radius: 4px; font-weight: bold; display: inline-block;">✅ ${mensaje}</span>`;
         
         const bgColor = index % 2 === 0 ? '#f8f9fa' : 'white';
@@ -1873,10 +1898,19 @@ function mostrarTablaIntegridadEdiciones(ediciones, departamento) {
             celdaFechaEditada = `<span style="color: #999; font-style: italic;">Sin edición</span>`;
         }
         
+        // ✅ NUEVO: Estilos visuales para comparación de huellas
+        const estiloHuellaGuardada = huellasCoinciden 
+            ? 'background-color: #d4edda; border: 1px solid #28a745;' 
+            : 'background-color: #f8d7da; border: 1px solid #dc3545;';
+            
+        const estiloHuellaCalculada = huellasCoinciden 
+            ? 'background-color: #d4edda; border: 1px solid #28a745;' 
+            : 'background-color:  #f8d7da; border: 1px solid #dc3545;';
+        
         tableHTML += `
             <tr style="${estiloFila}">
-                <td style="padding: 10px; border: 1px solid #ddd; text-align:  center;"><strong>${id}</strong></td>
-                <td style="padding: 10px; border: 1px solid #ddd;">${username}</td>
+                <td style="padding:  10px; border: 1px solid #ddd; text-align:  center;"><strong>${id}</strong></td>
+                <td style="padding:  10px; border: 1px solid #ddd;">${username}</td>
                 <td style="padding: 10px; border: 1px solid #ddd;">
                     <span style="color: #333;">${fechaOriginal}</span>
                 </td>
@@ -1886,10 +1920,19 @@ function mostrarTablaIntegridadEdiciones(ediciones, departamento) {
                 <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">
                     <strong style="background: #e3f2fd; padding: 4px 8px; border-radius: 4px;">${tipo}</strong>
                 </td>
-                <td style="padding: 10px; border:  1px solid #ddd; font-family: 'Courier New', monospace; font-size: 0.85em; color: #333; word-break: break-all;">
-                    <span title="${huella}" style="cursor: help;">${huellaAbreviada}</span>
+                <td style="padding: 8px; border: 1px solid #ddd;">
+                    <div style="${estiloHuellaGuardada} padding: 8px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 0.8em; word-break: break-all;">
+                        <div style="font-weight: bold; margin-bottom: 4px; color: #555;">💾 Guardada: </div>
+                        <span title="${huellaGuardada}" style="cursor: help;">${huellaGuardadaAbreviada}</span>
+                    </div>
                 </td>
-                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${estadoHTML}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">
+                    <div style="${estiloHuellaCalculada} padding: 8px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 0.8em; word-break: break-all;">
+                        <div style="font-weight: bold; margin-bottom: 4px; color:  #555;">🔢 Calculada:</div>
+                        <span title="${huellaCalculada}" style="cursor: help;">${huellaCalculadaAbreviada}</span>
+                    </div>
+                </td>
+                <td style="padding:  10px; border: 1px solid #ddd; text-align:  center;">${estadoHTML}</td>
             </tr>
         `;
     });
@@ -1903,7 +1946,7 @@ function mostrarTablaIntegridadEdiciones(ediciones, departamento) {
     const porcentajeValidos = total > 0 ? ((validos / total) * 100).toFixed(1) : 0;
     const porcentajeCorruptos = total > 0 ? ((corruptos / total) * 100).toFixed(1) : 0;
     
-    // ✅ NUEVO: Resumen igual que en Fichajes
+    // ✅ Resumen igual que en Fichajes
     tableHTML += `
         <div style="margin-top: 20px; padding: 20px; background-color: ${integridadOK ? '#e7f3ff' : '#fff3cd'}; border-radius: 8px; border-left: 4px solid ${integridadOK ? '#2196F3' : '#ffc107'};">
             <strong>📈 Resumen de Verificación:</strong>
@@ -1918,7 +1961,7 @@ function mostrarTablaIntegridadEdiciones(ediciones, departamento) {
                 </div>
                 <div>
                     <div style="font-size: 0.9em; color: #666;">Total de ediciones</div>
-                    <div style="font-size:  1.5em; font-weight: bold; color: #333;">📊 ${total}</div>
+                    <div style="font-size: 1.5em; font-weight: bold; color: #333;">📊 ${total}</div>
                 </div>
             </div>
         </div>
