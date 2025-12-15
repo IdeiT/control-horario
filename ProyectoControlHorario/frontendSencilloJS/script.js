@@ -1750,7 +1750,7 @@ async function verificarIntegridadEdiciones(event, pagina = 0) {
 }
 
 // ============================================
-// FUNCIÓN: MOSTRAR TABLA DE INTEGRIDAD DE EDICIONES
+// FUNCIÓN:  MOSTRAR TABLA DE INTEGRIDAD DE EDICIONES
 // ============================================
 function mostrarTablaIntegridadEdiciones(ediciones, departamento) {
     const container = document.getElementById('detallesVerificacionEdiciones');
@@ -1783,88 +1783,149 @@ function mostrarTablaIntegridadEdiciones(ediciones, departamento) {
     });
     
     const total = edicionesOrdenados. length;
-    const porcentajeValidos = total > 0 ? ((validos / total) * 100).toFixed(1) : 0;
-    const porcentajeCorruptos = total > 0 ? ((corruptos / total) * 100).toFixed(1) : 0;
+    const integridadOK = corruptos === 0;
+    
+    // ✅ NUEVO: Header igual que en Fichajes
+    let headerHTML = '';
+    if (integridadOK) {
+        headerHTML = `
+            <div style="background:  #d4edda; border: 2px solid #28a745; border-radius: 8px; padding: 20px; margin-bottom: 20px; text-align: center;">
+                <div style="font-size: 3em; margin-bottom: 10px;">✅</div>
+                <h2 style="color: #155724; margin: 0;">¡Integridad Verificada!</h2>
+                <p style="color: #155724; margin-top: 10px;">
+                    Todas las <strong>${total}</strong> ediciones del departamento 
+                    <strong>${departamento}</strong> son válidas y auténticas.
+                </p>
+            </div>
+        `;
+    } else {
+        headerHTML = `
+            <div style="background: #f8d7da; border: 2px solid #dc3545; border-radius: 8px; padding: 20px; margin-bottom: 20px; text-align: center;">
+                <div style="font-size: 3em; margin-bottom: 10px;">⚠️</div>
+                <h2 style="color:  #721c24; margin: 0;">¡Integridad Comprometida!</h2>
+                <p style="color:  #721c24; margin-top: 10px;">
+                    Se detectaron <strong>${corruptos}</strong> edición(es) con inconsistencias de un total de 
+                    <strong>${total}</strong> en el departamento <strong>${departamento}</strong>.
+                </p>
+            </div>
+        `;
+    }
     
     let tableHTML = `
-        <div style="margin-top: 20px;">
-            <h3 style="color: #5e72e4; margin-bottom: 15px;">📊 Detalle de Ediciones (ordenados por ID):</h3>
-            <div style="overflow-x: auto;">
-                <table style="width:  100%; border-collapse: collapse; margin-top: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                    <thead>
-                        <tr style="background: #5e72e4; color: white;">
-                            <th style="padding: 12px; text-align: center; border:  1px solid #ddd;">ID</th>
-                            <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Usuario</th>
-                            <th style="padding: 12px; text-align: left; border:  1px solid #ddd;">Fecha Original</th>
-                            <th style="padding: 12px; text-align: left; border:  1px solid #ddd;">Fecha Editada</th>
-                            <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">Tipo</th>
-                            <th style="padding: 12px; text-align: left; border: 1px solid #ddd; min-width: 200px;">Huella (Hash)</th>
-                            <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">Estado</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+        ${headerHTML}
+        <h3 style="margin-bottom: 15px;">📊 Detalle de Ediciones (ordenados por ID):</h3>
+        <div style="overflow-x: auto;">
+            <table style="width:  100%; border-collapse: collapse; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <thead>
+                    <tr style="background: #5e72e4; color: white;">
+                        <th style="padding:  12px; text-align:  center; border:  1px solid #ddd;">ID</th>
+                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Usuario</th>
+                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Fecha/Hora Original</th>
+                        <th style="padding: 12px; text-align: left; border:  1px solid #ddd;">Fecha/Hora Editada</th>
+                        <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">Tipo</th>
+                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd; min-width: 200px;">Huella (Hash)</th>
+                        <th style="padding: 12px; text-align: center; border:  1px solid #ddd;">Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
     `;
     
     edicionesOrdenados.forEach((edicion, index) => {
-        const esValido = !(edicion.mensaje || '').toUpperCase().includes('INCONSISTENCIA');
-        const bgColor = index % 2 === 0 ? '#f8f9fa' : 'white';
-        const estadoColor = esValido ? '#28a745' : '#dc3545';
-        const estadoIcono = esValido ? '✅' : '⚠️';
-        const estadoTexto = esValido ?  'Huella válida' : 'INCONSISTENCIA DETECTADA';
+        const id = edicion.id || '-';
+        const username = edicion.usuario || 'N/A';
         
         // Formatear fechas
-        const fechaOriginal = formatearFechaLocal(edicion.fechaHora_original) || 'N/A';
-        const fechaEditada = formatearFechaLocal(edicion.fechaHora_editado) || 'N/A';
+        const fechaOriginalUTC = edicion.fechaHora_original || 'N/A';
+        const fechaOriginal = formatearFechaLocal(fechaOriginalUTC);
         
-        // ✅ NUEVO: Obtener la huella completa
+        const fechaEditadaUTC = edicion. fechaHora_editado;
+        const fechaEditada = fechaEditadaUTC ? formatearFechaLocal(fechaEditadaUTC) : null;
+        
+        const tipo = edicion.tipo || 'N/A';
+        
+        // Obtener la huella completa
         const huella = edicion.huella || 'N/A';
         const huellaAbreviada = huella.length > 16 ? huella.substring(0, 16) + '...' : huella;
         
+        const mensaje = edicion.mensaje || edicion.estado || 'Estado desconocido';
+        const mensajeUpper = mensaje.toUpperCase();
+        const esCorrupto = mensajeUpper. includes('INCONSISTENCIA') || 
+                          mensajeUpper.includes('CORRUPTO') || 
+                          mensajeUpper.includes('COMPROMETID') ||
+                          mensajeUpper.includes('INVÁLIDO') ||
+                          mensajeUpper.includes('ERROR') ||
+                          mensajeUpper.includes('DETECTADA');
+        
+        const estadoHTML = esCorrupto 
+            ? `<span style="background: #f8d7da; color: #721c24; padding: 6px 12px; border-radius: 4px; font-weight: bold; display: inline-block;">⚠️ ${mensaje}</span>`
+            : `<span style="background: #d4edda; color: #155724; padding: 6px 12px; border-radius: 4px; font-weight: bold; display: inline-block;">✅ ${mensaje}</span>`;
+        
+        const bgColor = index % 2 === 0 ? '#f8f9fa' : 'white';
+        const estiloFila = esCorrupto 
+            ? `background-color: #fff5f5; border-left: 4px solid #dc3545;`
+            : `background-color: ${bgColor};`;
+        
+        // Celda de fecha editada
+        let celdaFechaEditada = '';
+        if (fechaEditada) {
+            celdaFechaEditada = `<span style="color: #007bff; font-weight: 500;">${fechaEditada}</span>`;
+        } else {
+            celdaFechaEditada = `<span style="color: #999; font-style: italic;">Sin edición</span>`;
+        }
+        
         tableHTML += `
-            <tr style="background: ${bgColor};">
-                <td style="padding:  10px; border: 1px solid #ddd; text-align:  center;"><strong>${edicion.id}</strong></td>
-                <td style="padding: 10px; border: 1px solid #ddd;">${edicion.usuario || 'N/A'}</td>
-                <td style="padding: 10px; border: 1px solid #ddd; color: #6c757d;">${fechaOriginal}</td>
-                <td style="padding: 10px; border: 1px solid #ddd; color: #007bff; font-weight: 500;">${fechaEditada}</td>
+            <tr style="${estiloFila}">
+                <td style="padding: 10px; border: 1px solid #ddd; text-align:  center;"><strong>${id}</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${username}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">
+                    <span style="color: #333;">${fechaOriginal}</span>
+                </td>
+                <td style="padding: 10px; border:  1px solid #ddd;">
+                    ${celdaFechaEditada}
+                </td>
                 <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">
-                    <span style="background: #e3f2fd; padding: 4px 8px; border-radius: 4px; font-weight: 500;">${edicion.tipo || 'N/A'}</span>
+                    <strong style="background: #e3f2fd; padding: 4px 8px; border-radius: 4px;">${tipo}</strong>
                 </td>
                 <td style="padding: 10px; border:  1px solid #ddd; font-family: 'Courier New', monospace; font-size: 0.85em; color: #333; word-break: break-all;">
                     <span title="${huella}" style="cursor: help;">${huellaAbreviada}</span>
                 </td>
-                <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: ${estadoColor}; font-weight: bold;">
-                    ${estadoIcono} ${estadoTexto}
-                </td>
+                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${estadoHTML}</td>
             </tr>
         `;
     });
     
     tableHTML += `
-                    </tbody>
-                </table>
-            </div>
+                </tbody>
+            </table>
         </div>
-        
-        <div style="margin-top: 30px; padding:  20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; color: white;">
-            <h3 style="margin-bottom: 15px;">📋 Resumen de Verificación: </h3>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                <div style="background:  rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; text-align: center;">
-                    <div style="font-size: 0.9em; opacity: 0.9;">Ediciones válidas</div>
-                    <div style="font-size: 2em; font-weight: bold; margin-top: 5px;">✅ ${validos} (${porcentajeValidos}%)</div>
+    `;
+    
+    const porcentajeValidos = total > 0 ? ((validos / total) * 100).toFixed(1) : 0;
+    const porcentajeCorruptos = total > 0 ? ((corruptos / total) * 100).toFixed(1) : 0;
+    
+    // ✅ NUEVO: Resumen igual que en Fichajes
+    tableHTML += `
+        <div style="margin-top: 20px; padding: 20px; background-color: ${integridadOK ? '#e7f3ff' : '#fff3cd'}; border-radius: 8px; border-left: 4px solid ${integridadOK ? '#2196F3' : '#ffc107'};">
+            <strong>📈 Resumen de Verificación:</strong>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+                <div>
+                    <div style="font-size: 0.9em; color: #666;">Ediciones válidas</div>
+                    <div style="font-size: 1.5em; font-weight: bold; color: #28a745;">✅ ${validos} (${porcentajeValidos}%)</div>
                 </div>
-                <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; text-align: center;">
-                    <div style="font-size: 0.9em; opacity: 0.9;">Ediciones con inconsistencias</div>
-                    <div style="font-size:  2em; font-weight:  bold; margin-top: 5px;">⚠️ ${corruptos} (${porcentajeCorruptos}%)</div>
+                <div>
+                    <div style="font-size: 0.9em; color: #666;">Ediciones con inconsistencias</div>
+                    <div style="font-size: 1.5em; font-weight: bold; color: #dc3545;">⚠️ ${corruptos} (${porcentajeCorruptos}%)</div>
                 </div>
-                <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; text-align: center;">
-                    <div style="font-size: 0.9em; opacity: 0.9;">Total de ediciones</div>
-                    <div style="font-size: 2em; font-weight: bold; margin-top: 5px;">📊 ${total}</div>
+                <div>
+                    <div style="font-size: 0.9em; color: #666;">Total de ediciones</div>
+                    <div style="font-size:  1.5em; font-weight: bold; color: #333;">📊 ${total}</div>
                 </div>
             </div>
         </div>
     `;
     
     container.innerHTML = tableHTML;
+    container.style.display = 'block';
 }
 
 // ============================================
