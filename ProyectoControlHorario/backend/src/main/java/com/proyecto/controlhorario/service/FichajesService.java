@@ -57,11 +57,16 @@ public class FichajesService {
 
     // Nuevo método para verificar integridad de fichajes
     // Cadena de hashes (similar a blockchain) para detectar manipulaciones no autorizadas en los registros de fichajes
-    public List<IntegridadResponse> comprobarIntegridadFichajes(String departamentoConsultado, String rolUsuarioActual, int pagina, int elementosPorPagina) {
+    public List<IntegridadResponse> comprobarIntegridadFichajes(String departamentoConsultado, String rolUsuarioActual, int pagina, int elementosPorPagina, String departamentoUsuario) {
 
         // ✅ VALIDAR QUE EL USUARIO ACTUAL SEA ADMINISTRADOR O AUDITOR O SUPERVISOR
         if (!rolUsuarioActual.equals("Administrador") && !rolUsuarioActual.equals("Auditor") && !rolUsuarioActual.equals("Supervisor")) {
                 throw new ForbiddenException("Solo los administradores, auditores y supervisores pueden comprobar la integridad de los fichajes");
+        }
+
+        // ✅ NUEVO: Validar que Auditor y Supervisor solo puedan ver su propio departamento
+        if ((rolUsuarioActual.equals("Auditor") || rolUsuarioActual.equals("Supervisor")) && ! departamentoConsultado.equalsIgnoreCase(departamentoUsuario)) {
+            throw new ForbiddenException("Los auditores y supervisores solo pueden verificar la integridad de su propio departamento");
         }
 
         return fichajeDAO.verificarIntegridadFichajes(departamentoConsultado, pagina, elementosPorPagina);

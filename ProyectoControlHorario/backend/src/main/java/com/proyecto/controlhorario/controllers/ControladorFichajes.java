@@ -127,14 +127,12 @@ public class ControladorFichajes {
             // 2️⃣ Validar token y obtener claims
             Map<String, Object> claims = JwtUtil.validateToken(token);
 
-            //  Solo los roles de administrador y auditor podran 
-            // comprobar la integridad en las tablas de los departamentos
             String rol = (String) claims.get("rol");     
-
+            String departamentoUsuario = (String) claims.get("departamento"); // ✅ NUEVO: Obtener departamento del usuario
         
 
             // 3️⃣ Llamar al servicio para comprobar integridad
-            List<IntegridadResponse> response = servicio.comprobarIntegridadFichajes(departamento, rol, pagina,elementosPorPagina);;
+            List<IntegridadResponse> response = servicio.comprobarIntegridadFichajes(departamento, rol, pagina,elementosPorPagina, departamentoUsuario);
         
 
             // En Spring Boot, la conversión a JSON es automática gracias a Jackson
