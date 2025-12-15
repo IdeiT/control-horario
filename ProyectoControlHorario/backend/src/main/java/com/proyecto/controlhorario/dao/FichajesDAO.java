@@ -210,7 +210,8 @@ public class FichajesDAO {
 
             DatabaseManager.withConnection(dbPath, conn -> {
 
-                String sql = "SELECT id, username, instante, tipo, huella FROM fichajes ORDER BY id ASC";  
+                String sql = "SELECT fichajes.id, username, fichajes.instante as fich_inst, ediciones.instante as edic_inst, fichajes.tipo, fichajes.huella FROM fichajes "+
+                                    "LEFT JOIN ediciones ON fichajes.id_edicion = ediciones.id ORDER BY fichajes.id ASC";  
                                                                      // Del más antiguo al más reciente
                                                                      // Si dos fichajes tienen el mismo instante (milisegundo igual), el 
                                                                      // orden por instante podría ser inconsistente. El id autoincremental 
@@ -220,9 +221,19 @@ public class FichajesDAO {
 
                     String huellaAnterior = null;
                     while (rs.next()) {  
+                        String fechaHora_response;   // Valor que se mostrara en el Frontend, pero internamente sigo 
+                                                    // calculando la huella con el instante original
+                        String instanteEdicion = rs.getString("edic_inst");
+                        if(instanteEdicion != null){
+                            // El fichaje fue editado, usar el instante editado
+                            fechaHora_response = instanteEdicion;
+                        } else {
+                            // No fue editado, usar el instante original
+                            fechaHora_response = rs.getString("fich_inst");
+                        }
                         int id = rs.getInt("id");
                         String usuario = rs.getString("username");
-                        String fechaHora = rs.getString("instante");
+                        String fechaHora = rs.getString("fich_inst");
                         String tipo = rs.getString("tipo");
                         String huellaGuardada = rs.getString("huella");
 
@@ -230,7 +241,7 @@ public class FichajesDAO {
                         String huellaCalculada = generarHash(base);
 
                              
-                        toret.add(new IntegridadResponse(id, usuario, fechaHora, tipo, huellaCalculada)); 
+                        toret.add(new IntegridadResponse(id, usuario, fechaHora_response, tipo, huellaCalculada)); 
 
                         if (!huellaCalculada.equals(huellaGuardada)) {
                             toret.get(toret.size()-1).setMensaje("INCONSISTENCIA DETECTADA");
