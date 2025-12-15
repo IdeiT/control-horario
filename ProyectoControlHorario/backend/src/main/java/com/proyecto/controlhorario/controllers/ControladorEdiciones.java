@@ -206,8 +206,7 @@ public class ControladorEdiciones {
             // 2️⃣ Validar token y obtener claims
             Map<String, Object> claims = JwtUtil.validateToken(token);
 
-            //  Solo los roles de administrador y auditor podran 
-            // comprobar la integridad en las tablas de los departamentos
+
             String rol = (String) claims.get("rol");     
             String departamentoUsuario = (String) claims.get("departamento"); // ✅ NUEVO: Obtener departamento del usuario
 

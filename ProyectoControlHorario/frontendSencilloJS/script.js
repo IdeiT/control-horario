@@ -2125,3 +2125,81 @@ async function rechazarSolicitud(solicitudId) {
         alert('❌ Error de conexión: ' + error.message);
     }
 }
+
+
+
+
+// ============================================
+// FUNCIÓN:  CARGAR DEPARTAMENTOS SEGÚN ROL (NUEVO)
+// ============================================
+async function cargarDepartamentosSegunRol(selectId = 'regDepartamento') {
+    const datos = obtenerDatosToken();
+    
+    if (!datos) {
+        console.error('No se pudo obtener los datos del usuario');
+        return;
+    }
+
+    const rol = datos.rol;
+    const departamentoUsuario = datos.departamento;
+
+    const select = document.getElementById(selectId);
+    
+    if (!select) {
+        console.warn(`⚠️ No se encontró el elemento con ID: ${selectId}`);
+        return;
+    }
+
+    // ✅ Si es Auditor o Supervisor → Solo mostrar su departamento
+    if (rol === 'Auditor' || rol === 'Supervisor') {
+        if (! departamentoUsuario || departamentoUsuario === '') {
+            select.innerHTML = '<option value="">Error: Sin departamento asignado</option>';
+            console.error(`❌ ${rol} sin departamento asignado`);
+            return;
+        }
+
+        // Solo mostrar el departamento del usuario
+        select.innerHTML = `<option value="${departamentoUsuario}" selected>${departamentoUsuario}</option>`;
+        select.disabled = true; // Deshabilitar el select para que no puedan cambiar
+        select.style.backgroundColor = '#f0f0f0';
+        select.style.cursor = 'not-allowed';
+        
+        console.log(`✅ ${rol} puede verificar solo su departamento:  ${departamentoUsuario}`);
+        
+    } else if (rol === 'Administrador') {
+        // ✅ Si es Administrador → Cargar todos los departamentos
+        try {
+            const response = await fetch(`${API_BASE_URL}/general/listarDepartamentos`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const departamentos = await response. json();
+                
+                select.innerHTML = '<option value="">Selecciona un departamento</option>';
+                
+                departamentos.forEach(dept => {
+                    const option = document.createElement('option');
+                    option.value = dept;
+                    option.textContent = dept;
+                    select.appendChild(option);
+                });
+                
+                console.log(`✅ Administrador puede verificar todos los departamentos (${departamentos.length})`);
+            } else {
+                console.error('Error al cargar departamentos:', response.status);
+                select.innerHTML = '<option value="">Error al cargar departamentos</option>';
+            }
+        } catch (error) {
+            console. error('Error al cargar departamentos:', error);
+            select.innerHTML = '<option value="">Error de conexión</option>';
+        }
+    } else {
+        // ✅ Otros roles no deberían llegar aquí
+        select.innerHTML = '<option value="">Sin permisos</option>';
+        console.error(`❌ Rol ${rol} no tiene permisos para verificar integridad`);
+    }
+}

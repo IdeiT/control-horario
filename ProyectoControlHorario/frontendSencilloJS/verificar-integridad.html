@@ -24,6 +24,10 @@
                     <select id="regDepartamento" required>
                         <option value="">Cargando departamentos...</option>
                     </select>
+                    <!-- ✅ NUEVO: Mensaje informativo -->
+                    <small id="mensajeDepartamento" style="color:  #666; display: none; margin-top: 5px;">
+                        ℹ️ Solo puedes verificar la integridad de tu departamento
+                    </small>
                 </div>
                 
                 <button type="submit" class="btn btn-primary">🔍 Verificar Integridad</button>
@@ -53,20 +57,28 @@
     
     <script src="script.js"></script>
     <script>
-        // Verificar que el usuario sea administrador o auditor
+        // ✅ MODIFICADO: Agregar Supervisor a los roles permitidos
         if (!verificarSesion()) {
             window.location.href = 'login.html';
         } else {
-            verificarRol(['Administrador', 'Auditor']);
+            verificarRol(['Administrador', 'Auditor', 'Supervisor']);
             
             // Mostrar nombre de usuario
             const datos = obtenerDatosToken();
             if (datos) {
-                document. getElementById('navUser').textContent = `${datos.username} (${datos.rol})`;
+                document.getElementById('navUser').textContent = `${datos.username} (${datos.rol})`;
+
+                // ✅ Mostrar mensaje si es Auditor o Supervisor
+                if (datos. rol === 'Auditor' || datos.rol === 'Supervisor') {
+                    const mensaje = document.getElementById('mensajeDepartamento');
+                    if (mensaje) {
+                        mensaje.style.display = 'block';
+                    }
+                }
             }
 
-            // ✅ CARGAR DEPARTAMENTOS DINÁMICAMENTE
-            cargarDepartamentos();
+            // ✅ NUEVO: Cargar departamentos según el rol
+            cargarDepartamentosSegunRol('regDepartamento');
         }
     </script>
 </body>
