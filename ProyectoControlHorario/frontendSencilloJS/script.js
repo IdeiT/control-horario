@@ -1246,43 +1246,6 @@ function abrirFormularioEdicion(idFichaje, instante, tipo) {
 }
 
 
-// ============================================
-// FUNCIÓN: POBLAR SELECT DE FICHAJES
-// ============================================
-function poblarSelectFichajes(fichajes) {
-    const select = document.getElementById('fichajeSelect');
-    
-    if (!select) return;
-    
-    if (! fichajes || fichajes.length === 0) {
-        select. innerHTML = '<option value="">No tienes fichajes para editar</option>';
-        return;
-    }
-    
-    const fichajesOrdenados = [... fichajes].sort((a, b) => {
-        const fechaA = new Date(a. instanteAnterior || a.instante || 0);
-        const fechaB = new Date(b.instanteAnterior || b.instante || 0);
-        return fechaB - fechaA;
-    });
-    
-    let optionsHTML = '<option value="">Selecciona un fichaje</option>';
-    
-    fichajesOrdenados. forEach(fichaje => {
-        const idFichaje = fichaje.id_fichaje || fichaje.id;
-
-        const instanteUTC = fichaje.instanteAnterior || fichaje. instante || 'N/A';
-        const instante = formatearFechaLocal(instanteUTC);
-
-        const tipo = fichaje.tipoAnterior || fichaje. tipo || 'N/A';
-        
-        const fueEditado = fichaje.nuevoInstante && fichaje.nuevoInstante !== null && fichaje.nuevoInstante !== '';
-        const badge = fueEditado ?  ' ✏️ [Editado]' : '';
-        
-        optionsHTML += `<option value="${idFichaje}">${instante} - ${tipo}${badge}</option>`;
-    });
-    
-    select.innerHTML = optionsHTML;
-}
 
 // ============================================
 // FUNCIÓN:  CARGAR DEPARTAMENTOS
