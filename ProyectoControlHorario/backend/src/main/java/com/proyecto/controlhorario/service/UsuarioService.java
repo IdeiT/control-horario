@@ -106,7 +106,7 @@ public class UsuarioService {
 
         // ✅ VALIDAR reCAPTCHA
         if (!RecaptchaVerifier.verify(recaptchaToken)) {
-            throw new UnauthorizedException("CAPTCHA inválido.  Por favor, inténtalo de nuevo.")
+            throw new UnauthorizedException("CAPTCHA inválido.  Por favor, inténtalo de nuevo.");
         }
 
         // Validar credenciales
