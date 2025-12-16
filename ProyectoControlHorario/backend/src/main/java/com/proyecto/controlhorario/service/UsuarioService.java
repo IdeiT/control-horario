@@ -13,10 +13,13 @@ import com.proyecto.controlhorario.dao.entity.Usuario;
 import com.proyecto.controlhorario.exceptions.ForbiddenException;
 import com.proyecto.controlhorario.exceptions.UnauthorizedException;
 import com.proyecto.controlhorario.security.JwtUtil;
+import com.proyecto.controlhorario.security.RecaptchaVerifier;
 
 import java.util.HashMap;
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -97,13 +100,27 @@ public class UsuarioService {
     
     public LoginResponse solicitarLogin(LoginRequest dto) {
 
+        String username = dto.getUsername();
+        String password = dto.getPassword();
+        String recaptchaToken = dto.getRecaptchaToken(); // ✅ NUEVO
+
+        // ✅ VALIDAR reCAPTCHA
+        if (!RecaptchaVerifier.verify(recaptchaToken)) {
+            throw new UnauthorizedException("CAPTCHA inválido.  Por favor, inténtalo de nuevo.")
+        }
+
+        // Validar credenciales
+        if (username == null || username.isEmpty() || password == null || password. isEmpty()) {
+             throw new IllegalArgumentException("Usuario y contraseña son obligatorios");
+        }
+
         //  Validar que el username ya existe
-        if (!usuarioDAO.existsByUsername(dto.getUsername())) {
+        if (!usuarioDAO.existsByUsername(username)) {
             throw new UnauthorizedException("El username no está registrado");
         }
 
         //  Validar que la password es correcta y obtener la entidad Usuario (devolvera un Usuario con username null si la password es incorrecta)
-        Usuario user = usuarioDAO.existsPassword(dto.getUsername(), dto.getPassword());
+        Usuario user = usuarioDAO.existsPassword(username, password);
  
         if(user.getUsername()==null){
             throw new UnauthorizedException("Contraseña incorrecta");

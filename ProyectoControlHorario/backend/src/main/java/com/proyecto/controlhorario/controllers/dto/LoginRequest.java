@@ -11,11 +11,22 @@ public class LoginRequest {
     @NotBlank(message = "La contraseña no puede estar vacía")
     private String password;
 
+    private String recaptchaToken; // ✅ NUEVO
+
     public LoginRequest() {}
 
-    public LoginRequest(String username, String password) {
+    public LoginRequest(String username, String password, String recaptchaToken) {
         this.username = username;
         this.password = password;
+        this.recaptchaToken = recaptchaToken;
+    }
+
+    public String getRecaptchaToken() {
+        return recaptchaToken;
+    }
+
+    public void setRecaptchaToken(String recaptchaToken) {
+        this.recaptchaToken = recaptchaToken;
     }
 
     public String getUsername() {
@@ -33,6 +44,8 @@ public class LoginRequest {
     public void setPassword(String password) {
         this.password = password;
     }
+
+    
 }
 
 

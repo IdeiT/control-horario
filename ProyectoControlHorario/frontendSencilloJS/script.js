@@ -164,15 +164,23 @@ async function registrarUsuario(event) {
 
 
 // ============================================
-// FUNCIÓN: LOGIN USUARIO
+// FUNCIÓN: LOGIN USUARIO (CON reCAPTCHA)
 // ============================================
 async function loginUsuario(event) {
-    if (event) event. preventDefault();
+    if (event) event.preventDefault();
     
-    console.log('🚀 Iniciando login.. .');
+    console.log('🚀 Iniciando login...');
     
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
+
+    // ✅ NUEVO: Obtener token de reCAPTCHA
+    const recaptchaResponse = grecaptcha.getResponse();
+    
+    if (!recaptchaResponse) {
+        mostrarRespuesta('loginResponse', '⚠️ Por favor completa el reCAPTCHA', 'error');
+        return;
+    }
 
     console.log('👤 Usuario:', username);
 
@@ -191,7 +199,8 @@ async function loginUsuario(event) {
             },
             body: JSON.stringify({
                 username,
-                password
+                password,
+                recaptchaToken: recaptchaResponse  // ✅ NUEVO: Enviar token al backend
             })
         });
 
@@ -207,11 +216,13 @@ async function loginUsuario(event) {
         } catch (e) {
             console.error('❌ Error parseando JSON:', e);
             mostrarRespuesta('loginResponse', '❌ Respuesta inválida del servidor', 'error');
+            // ✅ Resetear reCAPTCHA en caso de error
+            grecaptcha.reset();
             return;
         }
         
         if (response.ok) {
-            console.log('✅ Login OK');
+            console. log('✅ Login OK');
             console.log('🔑 Token:', data.token);
             
             if (data.token) {
@@ -220,19 +231,25 @@ async function loginUsuario(event) {
                 
                 mostrarRespuesta('loginResponse', '✅ Login exitoso.  Redirigiendo...', 'success');
                 setTimeout(() => {
-                    window.location. href = 'dashboard.html';
+                    window.location.href = 'dashboard.html';
                 }, 1500);
             } else {
                 console.error('❌ No hay token');
-                mostrarRespuesta('loginResponse', data.mensaje || 'Error: No se recibió el token', 'error');
+                mostrarRespuesta('loginResponse', data.mensaje || 'Error:  No se recibió el token', 'error');
+                // ✅ Resetear reCAPTCHA
+                grecaptcha.reset();
             }
         } else {
-            console. error('❌ Login fallido');
-            mostrarRespuesta('loginResponse', data. mensaje || 'Error en el login', 'error');
+            console.error('❌ Login fallido');
+            mostrarRespuesta('loginResponse', data.mensaje || 'Error en el login', 'error');
+            // ✅ Resetear reCAPTCHA para intentar de nuevo
+            grecaptcha.reset();
         }
     } catch (error) {
         console.error('💥 Error:', error);
-        mostrarRespuesta('loginResponse', '❌ Error de conexión: ' + error.message, 'error');
+        mostrarRespuesta('loginResponse', '❌ Error de conexión:  ' + error.message, 'error');
+        // ✅ Resetear reCAPTCHA
+        grecaptcha. reset();
     }
 }
 

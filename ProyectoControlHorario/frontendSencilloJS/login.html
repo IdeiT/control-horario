@@ -1,10 +1,12 @@
-<!DOCTYPE html>
+<! DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Control Horario</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- ✅ NUEVO: Script de Google reCAPTCHA -->
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
     <div class="container">
@@ -27,13 +29,18 @@
                     <input type="password" id="password" placeholder="Ingresa tu contraseña" required>
                 </div>
                 
+                <!-- ✅ NUEVO: reCAPTCHA -->
+                <div class="form-group" style="display: flex; justify-content: center; margin:  20px 0;">
+                    <div class="g-recaptcha" data-sitekey="6Ld0hy0sAAAAAIOlbGP6w7RVZ71EehyP4T7aFMgv"></div>
+                </div>
+                
                 <button type="submit" class="btn btn-primary btn-block">Iniciar Sesión</button>
             </form>
             
             <div id="loginResponse" class="response"></div>
             
             <div class="form-footer">
-                <p style="color: #666;">¿No tienes cuenta? Contacta con tu administrador.</p>
+                <p style="color: #666;">¿No tienes cuenta?  Contacta con tu administrador. </p>
             </div>
         </div>
     </div>
