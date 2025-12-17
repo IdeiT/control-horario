@@ -1,11 +1,7 @@
-import { mergeApplicationConfig, ApplicationConfig } from '@angular/core';
-import { provideServerRendering } from '@angular/platform-server';
-import { appConfig } from './app/app.config';
+import { bootstrapApplication } from '@angular/platform-browser';
+import { AppComponent } from './app/app';
+import { config } from './app/app.config.server';
 
-const serverConfig: ApplicationConfig = {
-  providers: [
-    provideServerRendering()
-  ]
-};
+const bootstrap = () => bootstrapApplication(AppComponent, config);
 
-export const config = mergeApplicationConfig(appConfig, serverConfig);
+export default bootstrap;
