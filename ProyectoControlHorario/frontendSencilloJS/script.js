@@ -773,10 +773,18 @@ async function verificarIntegridad(event, pagina = 0) {
 // ============================================
 // FUNCIÓN:  CAMBIAR ELEMENTOS POR PÁGINA INTEGRIDAD
 // ============================================
-function cambiarElementosPorPaginaIntegridad(nuevoValor, departamento) {
+function cambiarElementosPorPaginaIntegridad(nuevoValor) {
     elementosPorPaginaIntegridad = parseInt(nuevoValor);
     console.log('📊 Elementos por página (integridad) cambiados a:', elementosPorPaginaIntegridad);
-    verificarIntegridad(null, 0); // Volver a la primera página
+    
+    // ✅ CORRECCIÓN: Recuperar el departamento del input antes de verificar
+    const departamento = document.getElementById('regDepartamento').value;
+    
+    if (departamento) {
+        verificarIntegridad(null, 0); // Volver a la primera página con el nuevo tamaño
+    } else {
+        console.warn('⚠️ No se puede cambiar elementos por página sin departamento seleccionado');
+    }
 }
 
 
@@ -1868,10 +1876,18 @@ function mostrarTablaIntegridadEdiciones(ediciones, departamento) {
 // ============================================
 // FUNCIÓN: CAMBIAR ELEMENTOS POR PÁGINA INTEGRIDAD EDICIONES
 // ============================================
-function cambiarElementosPorPaginaIntegridadEdiciones(nuevoValor, departamento) {
+function cambiarElementosPorPaginaIntegridadEdiciones(nuevoValor) {
     elementosPorPaginaIntegridadEdiciones = parseInt(nuevoValor);
     console.log('📊 Elementos por página (integridad ediciones) cambiados a:', elementosPorPaginaIntegridadEdiciones);
-    verificarIntegridadEdiciones(null, 0); // Volver a la primera página
+    
+    // ✅ CORRECCIÓN: Recuperar el departamento del input antes de verificar
+    const departamento = document.getElementById('departamentoEdiciones').value;
+    
+    if (departamento) {
+        verificarIntegridadEdiciones(null, 0); // Volver a la primera página con el nuevo tamaño
+    } else {
+        console. warn('⚠️ No se puede cambiar elementos por página sin departamento seleccionado');
+    }
 }
 
 
@@ -2315,7 +2331,7 @@ function actualizarControlesPaginacionIntegridad(fichajesEnPagina, departamento)
             
             <select 
                 id="elementosPorPaginaIntegridadSelect" 
-                onchange="cambiarElementosPorPaginaIntegridad(this.value)" 
+                onchange="cambiarElementosPorPaginaIntegridad(this.value, '${departamento}')" 
                 style="padding: 6px 10px; border:  1px solid #ddd; border-radius: 4px; font-size: 14px; background: white; cursor: pointer; min-width: 60px;">
                 <option value="5" ${elementosPorPaginaIntegridad === 5 ? 'selected' : ''}>5</option>
                 <option value="10" ${elementosPorPaginaIntegridad === 10 ? 'selected' : ''}>10</option>
@@ -2397,7 +2413,7 @@ function actualizarControlesPaginacionIntegridadEdiciones(edicionesEnPagina, dep
             
             <select 
                 id="elementosPorPaginaIntegridadEdicionesSelect" 
-                onchange="cambiarElementosPorPaginaIntegridadEdiciones(this. value)" 
+                onchange="cambiarElementosPorPaginaIntegridadEdiciones(this.value, '${departamento}')" 
                 style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; background: white; cursor:  pointer; min-width: 60px;">
                 <option value="5" ${elementosPorPaginaIntegridadEdiciones === 5 ? 'selected' : ''}>5</option>
                 <option value="10" ${elementosPorPaginaIntegridadEdiciones === 10 ? 'selected' :  ''}>10</option>
