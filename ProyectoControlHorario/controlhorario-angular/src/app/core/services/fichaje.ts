@@ -47,17 +47,6 @@ export class FichajeService {
   }
 
   /**
-   * Listar solicitudes pendientes (para Supervisor)
-   */
-  listarSolicitudes(pagina: number = 0, elementosPorPagina:  number = 5): Observable<SolicitudEdicion[]> {
-    const params = new HttpParams()
-      .set('pagina', pagina.toString())
-      .set('elementosPorPagina', elementosPorPagina.toString());
-
-    return this.http.get<SolicitudEdicion[]>(`${this.apiUrl}/listarSolicitudes`, { params });
-  }
-
-  /**
    * Aprobar solicitud de edición
    */
   aprobarSolicitud(solicitudId: number): Observable<AprobarResponse> {
@@ -71,5 +60,23 @@ export class FichajeService {
   rechazarSolicitud(solicitudId: number): Observable<AprobarResponse> {
     const params = new HttpParams().set('solicitudId', solicitudId.toString());
     return this.http.post<AprobarResponse>(`${this.apiUrl}/denegarSolicitud`, {}, { params });
+  }
+
+
+  // Otras funciones relacionadas con fichajes y solicitudes pueden añadirse aquí
+  /**
+ * Listar solicitudes pendientes (para Supervisor)  DE PRUEBA PARA LOGS
+ */
+  listarSolicitudes(pagina: number = 0, elementosPorPagina: number = 5): Observable<SolicitudEdicion[]> {
+    const params = new HttpParams()
+      .set('pagina', pagina.toString())
+      .set('elementosPorPagina', elementosPorPagina.toString());
+
+    // ✅ Log para ver la URL completa
+    const url = `${this.apiUrl}/listarSolicitudes?${params.toString()}`;
+    console.log('📡 URL completa de listarSolicitudes:', url);
+    console.log('📊 Parámetros:', { pagina, elementosPorPagina });
+
+    return this.http.get<SolicitudEdicion[]>(`${this.apiUrl}/listarSolicitudes`, { params });
   }
 }

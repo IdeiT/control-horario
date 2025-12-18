@@ -14,12 +14,12 @@
 
     <form (ngSubmit)="onSubmit()" *ngIf="fichajeId">
       <div class="form-group">
-        <label>Fecha/Hora Original:</label>
+        <label>Fecha/Hora Original: </label>
         <input 
           type="text" 
-          [value]="instanteOriginal"
+          [value]="instanteOriginalLocal"
           disabled
-          style="background: #f5f5f5; cursor: not-allowed;">
+          style="background:  #f5f5f5; cursor: not-allowed;">
       </div>
 
       <div class="form-group">
@@ -44,7 +44,7 @@
 
       <div style="background: #fff3cd; border:  1px solid #ffc107; border-radius: 8px; padding: 15px; margin:  20px 0;">
         <p style="margin: 0; color: #856404;">
-          ⚠️ <strong>Nota:</strong> Esta solicitud debe ser aprobada por tu supervisor.
+          ⚠️ <strong>Nota:</strong> Esta solicitud debe ser aprobada por tu supervisor. 
         </p>
       </div>
 
@@ -67,7 +67,7 @@
 
     <!-- Error al cargar -->
     <div *ngIf="! fichajeId && ! isLoading" style="text-align: center; padding: 20px;">
-      <p style="color:  #dc3545; font-size: 1.1em;">❌ {{ errorMessage || 'No se encontraron datos del fichaje' }}</p>
+      <p style="color: #dc3545; font-size: 1.1em;">❌ {{ errorMessage || 'No se encontraron datos del fichaje' }}</p>
       <button class="btn btn-secondary" (click)="cancelar()" style="margin-top: 15px;">
         ← Volver a Fichajes
       </button>
