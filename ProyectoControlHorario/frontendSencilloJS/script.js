@@ -669,7 +669,7 @@ function cerrarSesion() {
 // ============================================
 let paginaActualIntegridad = 0;
 let elementosPorPaginaIntegridad = 5;
-let ultimaPaginaValidaIntegridad = 0; // ✅ NUEVO: Guardar última página válida
+let ultimaPaginaValidaIntegridad = 0;
 
 async function verificarIntegridad(event, pagina = 0) {
     if (event) event.preventDefault();
@@ -693,10 +693,9 @@ async function verificarIntegridad(event, pagina = 0) {
 
     mostrarRespuesta('verificarResponse', '🔄 Verificando integridad, por favor espera...', 'success');
 
-    // Limpiar tabla antes de cargar
     const container = document.getElementById('detallesVerificacion');
     if (container) {
-        container. innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">🔄 Verificando integridad...</p>';
+        container.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">🔄 Verificando integridad...</p>';
     }
 
     try {
@@ -722,10 +721,10 @@ async function verificarIntegridad(event, pagina = 0) {
             }
             
             if (data.length === 0 && pagina === 0) {
-                // ✅ No hay fichajes en absoluto
+                // No hay fichajes en absoluto
                 mostrarRespuesta('verificarResponse', 'ℹ️ No hay fichajes en este departamento', 'success');
                 if (container) {
-                    container.innerHTML = '<p style="text-align: center; color: #666; padding:  20px;">No hay fichajes para verificar</p>';
+                    container.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No hay fichajes para verificar</p>';
                 }
                 const controles = document.getElementById('paginacionControlesIntegridad');
                 if (controles) {
@@ -733,27 +732,27 @@ async function verificarIntegridad(event, pagina = 0) {
                 }
                 ultimaPaginaValidaIntegridad = 0;
             } else if (data.length === 0 && pagina > 0) {
-                // ✅ CORRECCIÓN: Intentamos ir a una página que no existe
-                console.warn(`⚠️ Página ${pagina} no tiene datos.  Volviendo a página ${ultimaPaginaValidaIntegridad}`);
+                // ✅ CORRECCIÓN:  Intentamos ir a una página que no existe → NO mostrar nada y quedarse en la última página válida
+                console.warn(`⚠️ Página ${pagina} no tiene datos. Manteniendo página ${ultimaPaginaValidaIntegridad}`);
                 
-                // Volver a la última página válida
+                // NO hacer nada, solo quedarse en la última página válida
                 paginaActualIntegridad = ultimaPaginaValidaIntegridad;
                 
-                // No recargar, solo mantener la última página
-                mostrarRespuesta('verificarResponse', 'ℹ️ No hay más páginas disponibles', 'success');
+                // ✅ NO mostrar tabla vacía, mantener la tabla anterior
+                // ✅ NO actualizar controles porque ya están correctos
                 
-                // Actualizar controles para reflejar que estamos en la última página
-                actualizarControlesPaginacionIntegridad(elementosPorPaginaIntegridad, departamento);
             } else {
                 // ✅ Hay datos:  guardar como última página válida
                 ultimaPaginaValidaIntegridad = pagina;
                 mostrarTablaIntegridad(data, departamento);
+                
+                // ✅ CRÍTICO: Pasar `data. length` para que detecte si es la última página
                 actualizarControlesPaginacionIntegridad(data.length, departamento);
             }
         } else {
             mostrarRespuesta('verificarResponse', data.mensaje || data.msg || 'Error al verificar integridad', 'error');
             if (container) {
-                container. innerHTML = '<p style="text-align: center; color: #e74c3c; padding: 20px;">❌ Error al verificar integridad</p>';
+                container.innerHTML = '<p style="text-align: center; color: #e74c3c; padding: 20px;">❌ Error al verificar integridad</p>';
             }
             if (response.status === 401) {
                 cerrarSesion();
