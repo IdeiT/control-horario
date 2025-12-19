@@ -308,11 +308,11 @@ async function fichar() {
 
 
 // ============================================
-// FUNCIÓN:  LISTAR FICHAJES DEL USUARIO (CON PAGINACIÓN)
+// FUNCIÓN:   LISTAR FICHAJES DEL USUARIO (CON PAGINACIÓN)
 // ============================================
 let paginaActual = 0;
 let elementosPorPagina = 5;
-let totalPaginasFichajes = 1; // ✅ NUEVO
+let totalPaginasFichajes = 1;
 
 async function listarFichajes(pagina = 0) {
     const authToken = localStorage.getItem('authToken');
@@ -326,7 +326,7 @@ async function listarFichajes(pagina = 0) {
     paginaActual = pagina;
 
     try {
-        // ✅ NUEVO: Primero obtener el total de fichajes
+        // ✅ CORREGIDO: Primero obtener el total de fichajes
         const urlTotal = `${API_BASE_URL}/contarFichajesUsuario`;
         const responseTotal = await fetch(urlTotal, {
             method: 'GET',
@@ -336,10 +336,11 @@ async function listarFichajes(pagina = 0) {
         });
 
         if (responseTotal.ok) {
-            const totalFichajes = await responseTotal. json();
+            const data = await responseTotal.json();
+            const totalFichajes = data.totalFichajesUsuario || 0; // ✅ EXTRAER DEL OBJETO
             totalPaginasFichajes = Math.ceil(totalFichajes / elementosPorPagina);
             
-            console.log(`📊 Total de fichajes: ${totalFichajes}, Total de páginas: ${totalPaginasFichajes}`);
+            console.log(`📊 Total de fichajes:  ${totalFichajes}, Total de páginas: ${totalPaginasFichajes}`);
         }
 
         // Obtener los fichajes de la página actual
@@ -362,15 +363,15 @@ async function listarFichajes(pagina = 0) {
                 document.getElementById('paginacionControles').style.display = 'none';
             } else if (fichajes.length === 0 && pagina > 0) {
                 // Página fuera de rango, volver a la última válida
-                console.warn(`⚠️ Página ${pagina} no existe.  Volviendo a la última página`);
+                console.warn(`⚠️ Página ${pagina} no existe.   Volviendo a la última página`);
                 listarFichajes(totalPaginasFichajes - 1);
             } else {
-                // ✅ Hay datos:  mostrar tabla
+                // ✅ Hay datos:   mostrar tabla
                 mostrarRespuesta('listarResponse', `✅ Mostrando fichajes de la página ${pagina + 1} de ${totalPaginasFichajes}`, 'success');
                 mostrarTablaFichajesConEditar(fichajes);
                 
                 // Actualizar controles
-                actualizarControlesPaginacion(fichajes. length);
+                actualizarControlesPaginacion(fichajes.length);
             }
         } else {
             const data = await response.json();
@@ -380,7 +381,7 @@ async function listarFichajes(pagina = 0) {
             }
         }
     } catch (error) {
-        mostrarRespuesta('listarResponse', '❌ Error de conexión:  ' + error.message, 'error');
+        mostrarRespuesta('listarResponse', '❌ Error de conexión:   ' + error.message, 'error');
     }
 }
 
@@ -529,11 +530,11 @@ async function solicitarEdicion(event) {
 }
 
 // ============================================
-// FUNCIÓN: LISTAR SOLICITUDES PENDIENTES (CON PAGINACIÓN)
+// FUNCIÓN:  LISTAR SOLICITUDES PENDIENTES (CON PAGINACIÓN)
 // ============================================
 let paginaActualSolicitudes = 0;
 let elementosPorPaginaSolicitudes = 5;
-let totalPaginasSolicitudes = 1; // ✅ NUEVO
+let totalPaginasSolicitudes = 1;
 
 async function listarSolicitudesPendientes(pagina = 0) {
     const authToken = localStorage.getItem('authToken');
@@ -547,7 +548,7 @@ async function listarSolicitudesPendientes(pagina = 0) {
     paginaActualSolicitudes = pagina;
 
     try {
-        // ✅ NUEVO: Primero obtener el total de solicitudes
+        // ✅ CORREGIDO: Primero obtener el total de solicitudes
         const urlTotal = `${API_BASE_URL}/contarSolicitudesTotales`;
         const responseTotal = await fetch(urlTotal, {
             method: 'GET',
@@ -556,9 +557,10 @@ async function listarSolicitudesPendientes(pagina = 0) {
             }
         });
 
-        if (responseTotal. ok) {
-            const totalSolicitudes = await responseTotal.json();
-            totalPaginasSolicitudes = Math.ceil(totalSolicitudes / elementosPorPaginaSolicitudes);
+        if (responseTotal.ok) {
+            const data = await responseTotal.json();
+            const totalSolicitudes = data.totalSolicitudes || 0; // ✅ EXTRAER DEL OBJETO
+            totalPaginasSolicitudes = Math. ceil(totalSolicitudes / elementosPorPaginaSolicitudes);
             
             console.log(`📊 Total de solicitudes: ${totalSolicitudes}, Total de páginas: ${totalPaginasSolicitudes}`);
         }
@@ -588,10 +590,10 @@ async function listarSolicitudesPendientes(pagina = 0) {
                 }
             } else if (solicitudes.length === 0 && pagina > 0) {
                 // Página fuera de rango, volver a la última válida
-                console.warn(`⚠️ Página ${pagina} no existe. Volviendo a la última página`);
+                console.warn(`⚠️ Página ${pagina} no existe.  Volviendo a la última página`);
                 listarSolicitudesPendientes(totalPaginasSolicitudes - 1);
             } else {
-                // ✅ Hay datos: mostrar tabla
+                // ✅ Hay datos:  mostrar tabla
                 mostrarSolicitudes(solicitudes);
                 
                 // Actualizar controles
@@ -606,7 +608,7 @@ async function listarSolicitudesPendientes(pagina = 0) {
         }
     } catch (error) {
         console.error('Error al listar solicitudes:', error);
-        mostrarRespuesta('solicitudesResponse', '❌ Error de conexión: ' + error.message, 'error');
+        mostrarRespuesta('solicitudesResponse', '❌ Error de conexión:  ' + error.message, 'error');
     }
 }
 
@@ -714,11 +716,11 @@ function cerrarSesion() {
 }
 
 // ============================================
-// FUNCIÓN: VERIFICAR INTEGRIDAD (CON PAGINACIÓN)
+// FUNCIÓN:  VERIFICAR INTEGRIDAD (CON PAGINACIÓN)
 // ============================================
 let paginaActualIntegridad = 0;
 let elementosPorPaginaIntegridad = 5;
-let totalPaginasIntegridad = 1; // ✅ NUEVO
+let totalPaginasIntegridad = 1;
 
 async function verificarIntegridad(event, pagina = 0) {
     if (event) event.preventDefault();
@@ -744,11 +746,11 @@ async function verificarIntegridad(event, pagina = 0) {
 
     const container = document.getElementById('detallesVerificacion');
     if (container) {
-        container.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">🔄 Verificando integridad... </p>';
+        container. innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">🔄 Verificando integridad...  </p>';
     }
 
     try {
-        // ✅ NUEVO:  Primero obtener el total de fichajes
+        // ✅ CORREGIDO:   Primero obtener el total de fichajes
         const urlTotal = `${API_BASE_URL}/contarFichajesTotales? departamento=${encodeURIComponent(departamento)}`;
         const responseTotal = await fetch(urlTotal, {
             method: 'GET',
@@ -758,7 +760,8 @@ async function verificarIntegridad(event, pagina = 0) {
         });
 
         if (responseTotal.ok) {
-            const totalFichajes = await responseTotal.json();
+            const data = await responseTotal.json();
+            const totalFichajes = data.totalFichajesDepartamento || 0; // ✅ EXTRAER DEL OBJETO
             totalPaginasIntegridad = Math. ceil(totalFichajes / elementosPorPaginaIntegridad);
             
             console. log(`📊 Total de fichajes en ${departamento}: ${totalFichajes}, Total de páginas: ${totalPaginasIntegridad}`);
@@ -794,11 +797,11 @@ async function verificarIntegridad(event, pagina = 0) {
                 }
                 const controles = document.getElementById('paginacionControlesIntegridad');
                 if (controles) {
-                    controles.style. display = 'none';
+                    controles.style.display = 'none';
                 }
             } else if (data.length === 0 && pagina > 0) {
                 // Página fuera de rango, volver a la última válida
-                console.warn(`⚠️ Página ${pagina} no existe. Volviendo a la última página`);
+                console.warn(`⚠️ Página ${pagina} no existe.  Volviendo a la última página`);
                 verificarIntegridad(null, totalPaginasIntegridad - 1);
             } else {
                 // ✅ Hay datos: mostrar tabla
@@ -810,7 +813,7 @@ async function verificarIntegridad(event, pagina = 0) {
         } else {
             mostrarRespuesta('verificarResponse', data.mensaje || data.msg || 'Error al verificar integridad', 'error');
             if (container) {
-                container.innerHTML = '<p style="text-align: center; color:  #e74c3c; padding: 20px;">❌ Error al verificar integridad</p>';
+                container.innerHTML = '<p style="text-align:  center; color:   #e74c3c; padding: 20px;">❌ Error al verificar integridad</p>';
             }
             if (response.status === 401) {
                 cerrarSesion();
@@ -820,7 +823,7 @@ async function verificarIntegridad(event, pagina = 0) {
         console.error('Error al verificar integridad:', error);
         mostrarRespuesta('verificarResponse', '❌ Error de conexión: ' + error.message, 'error');
         if (container) {
-            container.innerHTML = '<p style="text-align: center; color: #e74c3c; padding:  20px;">❌ Error de conexión</p>';
+            container.innerHTML = '<p style="text-align: center; color:  #e74c3c; padding:   20px;">❌ Error de conexión</p>';
         }
     }
 }
@@ -1630,7 +1633,7 @@ async function cambiarPassword(event) {
 // ============================================
 let paginaActualIntegridadEdiciones = 0;
 let elementosPorPaginaIntegridadEdiciones = 5;
-let totalPaginasIntegridadEdiciones = 1; // ✅ NUEVO
+let totalPaginasIntegridadEdiciones = 1;
 
 async function verificarIntegridadEdiciones(event, pagina = 0) {
     if (event) event.preventDefault();
@@ -1652,15 +1655,15 @@ async function verificarIntegridadEdiciones(event, pagina = 0) {
 
     paginaActualIntegridadEdiciones = pagina;
 
-    mostrarRespuesta('verificarEdicionesResponse', '🔄 Verificando integridad de ediciones, por favor espera... ', 'success');
+    mostrarRespuesta('verificarEdicionesResponse', '🔄 Verificando integridad de ediciones, por favor espera...  ', 'success');
 
     const container = document.getElementById('detallesVerificacionEdiciones');
     if (container) {
-        container.innerHTML = '<p style="text-align: center; color:  #666; padding: 20px;">🔄 Verificando integridad... </p>';
+        container.innerHTML = '<p style="text-align: center; color:   #666; padding: 20px;">🔄 Verificando integridad...  </p>';
     }
 
     try {
-        // ✅ NUEVO: Primero obtener el total de ediciones
+        // ✅ CORREGIDO:  Primero obtener el total de ediciones
         const urlTotal = `${API_BASE_URL}/contarEdicionesTotales?departamento=${encodeURIComponent(departamento)}`;
         const responseTotal = await fetch(urlTotal, {
             method: 'GET',
@@ -1670,7 +1673,8 @@ async function verificarIntegridadEdiciones(event, pagina = 0) {
         });
 
         if (responseTotal.ok) {
-            const totalEdiciones = await responseTotal. json();
+            const data = await responseTotal.json();
+            const totalEdiciones = data.totalEdiciones || 0; // ✅ EXTRAER DEL OBJETO
             totalPaginasIntegridadEdiciones = Math.ceil(totalEdiciones / elementosPorPaginaIntegridadEdiciones);
             
             console.log(`📊 Total de ediciones en ${departamento}: ${totalEdiciones}, Total de páginas: ${totalPaginasIntegridadEdiciones}`);
@@ -1722,7 +1726,7 @@ async function verificarIntegridadEdiciones(event, pagina = 0) {
         } else {
             mostrarRespuesta('verificarEdicionesResponse', data.mensaje || data.msg || 'Error al verificar integridad de ediciones', 'error');
             if (container) {
-                container.innerHTML = '<p style="text-align: center; color:  #e74c3c; padding: 20px;">❌ Error al verificar integridad</p>';
+                container.innerHTML = '<p style="text-align: center; color:   #e74c3c; padding: 20px;">❌ Error al verificar integridad</p>';
             }
             if (response.status === 401) {
                 cerrarSesion();
@@ -1732,7 +1736,7 @@ async function verificarIntegridadEdiciones(event, pagina = 0) {
         console.error('Error al verificar integridad de ediciones:', error);
         mostrarRespuesta('verificarEdicionesResponse', '❌ Error de conexión: ' + error.message, 'error');
         if (container) {
-            container.innerHTML = '<p style="text-align: center; color: #e74c3c; padding: 20px;">❌ Error de conexión</p>';
+            container.innerHTML = '<p style="text-align: center; color: #e74c3c; padding:  20px;">❌ Error de conexión</p>';
         }
     }
 }
