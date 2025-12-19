@@ -547,9 +547,18 @@ async function listarSolicitudesPendientes(pagina = 0) {
 
     paginaActualSolicitudes = pagina;
 
-    try {
-        // ✅ CORREGIDO: Primero obtener el total de solicitudes
-        const urlTotal = `${API_BASE_URL}/contarSolicitudesTotales`;
+    try {    
+        // Obtener departamento del token del usuario autenticado
+        const datos = obtenerDatosToken();
+        const departamento = datos?.departamento || '';
+
+        if (!departamento) {
+            mostrarRespuesta('solicitudesResponse', '⚠️ No se pudo obtener el departamento del usuario', 'error');
+            return;
+        }
+
+        const urlTotal = `${API_BASE_URL}/contarSolicitudesTotales?departamento=${encodeURIComponent(departamento)}`;
+        
         const responseTotal = await fetch(urlTotal, {
             method: 'GET',
             headers: {
@@ -559,7 +568,7 @@ async function listarSolicitudesPendientes(pagina = 0) {
 
         if (responseTotal.ok) {
             const data = await responseTotal.json();
-            const totalSolicitudes = data.totalSolicitudes || 0; // ✅ EXTRAER DEL OBJETO
+            const totalSolicitudes = data.totalSolicitudesDepartamento || 0;
             totalPaginasSolicitudes = Math. ceil(totalSolicitudes / elementosPorPaginaSolicitudes);
             
             console.log(`📊 Total de solicitudes: ${totalSolicitudes}, Total de páginas: ${totalPaginasSolicitudes}`);
@@ -1677,7 +1686,7 @@ async function verificarIntegridadEdiciones(event, pagina = 0) {
 
         if (responseTotal.ok) {
             const data = await responseTotal. json();
-            totalEdicionesIntegridad = data.totalEdiciones || 0; // ✅ CAMBIAR:  usar variable GLOBAL
+            totalEdicionesIntegridad = data.totalEdicionesDepartamento || 0; // ✅ CORRECTO
             totalPaginasIntegridadEdiciones = Math. ceil(totalEdicionesIntegridad / elementosPorPaginaIntegridadEdiciones); // ✅ CAMBIAR: usar variable GLOBAL
             
             console.log(`📊 Total de ediciones en ${departamento}: ${totalEdicionesIntegridad}, Total de páginas: ${totalPaginasIntegridadEdiciones}`); // ✅ CAMBIAR: usar variable GLOBAL
