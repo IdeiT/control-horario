@@ -825,36 +825,6 @@ async function verificarIntegridad(event, pagina = 0) {
     }
 }
 
-// ✅ NUEVO: Función para verificar si hay una página siguiente
-async function verificarSiguientePaginaIntegridad(paginaSiguiente, authToken, departamento) {
-    try {
-        const url = `${API_BASE_URL}/verificarIntegridadFichajes?departamento=${encodeURIComponent(departamento)}&pagina=${paginaSiguiente}&elementosPorPagina=${elementosPorPaginaIntegridad}`;
-        
-        console.log('🔍 Verificando si existe página siguiente:', paginaSiguiente);
-        
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${authToken}`
-            }
-        });
-
-        if (response.ok) {
-            const fichajesSiguientes = await response.json();
-            
-            hayMasPaginasIntegridad = fichajesSiguientes. length > 0;
-            
-            console.log(`✅ Página siguiente ${paginaSiguiente}: ${fichajesSiguientes.length} elementos. Hay más páginas: ${hayMasPaginasIntegridad}`);
-            
-            // Actualizar controles
-            actualizarControlesPaginacionIntegridad(elementosPorPaginaIntegridad, departamento);
-        }
-    } catch (error) {
-        console.error('Error al verificar página siguiente:', error);
-        hayMasPaginasIntegridad = true;
-    }
-}
-
 
 
 // ============================================
@@ -1767,35 +1737,6 @@ async function verificarIntegridadEdiciones(event, pagina = 0) {
     }
 }
 
-// ✅ NUEVO: Función para verificar si hay una página siguiente
-async function verificarSiguientePaginaIntegridadEdiciones(paginaSiguiente, authToken, departamento) {
-    try {
-        const url = `${API_BASE_URL}/verificarIntegridadEdiciones? departamento=${encodeURIComponent(departamento)}&pagina=${paginaSiguiente}&elementosPorPagina=${elementosPorPaginaIntegridadEdiciones}`;
-        
-        console.log('🔍 Verificando si existe página siguiente:', paginaSiguiente);
-        
-        const response = await fetch(url, {
-            method:  'GET',
-            headers:  {
-                'Authorization': `Bearer ${authToken}`
-            }
-        });
-
-        if (response.ok) {
-            const edicionesSiguientes = await response. json();
-            
-            hayMasPaginasIntegridadEdiciones = edicionesSiguientes.length > 0;
-            
-            console.log(`✅ Página siguiente ${paginaSiguiente}: ${edicionesSiguientes.length} elementos. Hay más páginas: ${hayMasPaginasIntegridadEdiciones}`);
-            
-            // Actualizar controles
-            actualizarControlesPaginacionIntegridadEdiciones(elementosPorPaginaIntegridadEdiciones, departamento);
-        }
-    } catch (error) {
-        console.error('Error al verificar página siguiente:', error);
-        hayMasPaginasIntegridadEdiciones = true;
-    }
-}
 
 // ============================================
 // FUNCIÓN:  MOSTRAR TABLA DE INTEGRIDAD DE EDICIONES
