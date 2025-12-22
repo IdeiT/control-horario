@@ -326,22 +326,31 @@ async function listarFichajes(pagina = 0) {
     paginaActual = pagina;
 
     try {
-        // ✅ CORREGIDO: Primero obtener el total de fichajes
-        const urlTotal = `${API_BASE_URL}/contarFichajesUsuario`;
+        // ✅ CORREGIDO:  Obtener username del token
+        const datos = obtenerDatosToken();
+        const username = datos?. username || '';
+        
+        if (! username) {
+            mostrarRespuesta('listarResponse', '⚠️ No se pudo obtener el usuario', 'error');
+            return;
+        }
+        
+        // ✅ CORREGIDO: Enviar username como parámetro
+        const urlTotal = `${API_BASE_URL}/contarFichajesUsuario?username=${encodeURIComponent(username)}`;
         const responseTotal = await fetch(urlTotal, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${authToken}`
-            }
-        });
-
-        if (responseTotal.ok) {
-            const data = await responseTotal.json();
-            const totalFichajes = data.totalFichajesUsuario || 0; // ✅ EXTRAER DEL OBJETO
-            totalPaginasFichajes = Math.ceil(totalFichajes / elementosPorPagina);
-            
-            console.log(`📊 Total de fichajes:  ${totalFichajes}, Total de páginas: ${totalPaginasFichajes}`);
         }
+    });
+
+    if (responseTotal.ok) {
+        const data = await responseTotal.json();
+        const totalFichajes = data.totalFichajesUsuario || 0;
+        totalPaginasFichajes = Math.ceil(totalFichajes / elementosPorPagina);
+        
+        console.log(`📊 Total de fichajes del usuario ${username}: ${totalFichajes}, Total de páginas: ${totalPaginasFichajes}`);
+    }
 
         // Obtener los fichajes de la página actual
         const url = `${API_BASE_URL}/listarFichajesUsuario?pagina=${pagina}&elementosPorPagina=${elementosPorPagina}`;
