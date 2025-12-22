@@ -754,6 +754,8 @@ let paginaActualIntegridad = 0;
 let elementosPorPaginaIntegridad = 5;
 let totalPaginasIntegridad = 1;
 let totalFichajesIntegridad = 0; // ✅ NUEVA VARIABLE GLOBAL
+let fichajesValidosIntegridad = 0; // ✅ NUEVA VARIABLE GLOBAL
+let fichajesCorruptosIntegridad = 0; // ✅ NUEVA VARIABLE GLOBAL
 
 async function verificarIntegridad(event, pagina = 0) {
     if (event) event.preventDefault();
@@ -793,12 +795,47 @@ async function verificarIntegridad(event, pagina = 0) {
         });
 
         if (responseTotal.ok) {
-            const data = await responseTotal.json();
-            totalFichajesIntegridad = data.totalFichajesDepartamento || 0; // ✅ GUARDAR EN GLOBAL
-            totalPaginasIntegridad = Math.ceil(totalFichajesIntegridad / elementosPorPaginaIntegridad);
+    const data = await responseTotal.json();
+    totalFichajesIntegridad = data.totalFichajesDepartamento || 0;
+    totalPaginasIntegridad = Math.ceil(totalFichajesIntegridad / elementosPorPaginaIntegridad);
+    
+    console.log(`📊 Total de fichajes en ${departamento}: ${totalFichajesIntegridad}, Total de páginas: ${totalPaginasIntegridad}`);
+    
+    // ✅ NUEVO: Obtener TODOS los fichajes para contar válidos/corruptos
+    if (totalFichajesIntegridad > 0) {
+        const urlTodos = `${API_BASE_URL}/verificarIntegridadFichajes?departamento=${encodeURIComponent(departamento)}&pagina=0&elementosPorPagina=${totalFichajesIntegridad}`;
+        const responseTodos = await fetch(urlTodos, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        
+        if (responseTodos.ok) {
+            const todosFichajes = await responseTodos. json();
             
-            console.log(`📊 Total de fichajes en ${departamento}: ${totalFichajesIntegridad}, Total de páginas: ${totalPaginasIntegridad}`);
+            // Contar válidos y corruptos
+            fichajesValidosIntegridad = 0;
+            fichajesCorruptosIntegridad = 0;
+            
+            todosFichajes.forEach(f => {
+                const mensaje = (f.mensaje || f.estado || '').toUpperCase();
+                if (mensaje.includes('INCONSISTENCIA') || 
+                    mensaje.includes('CORRUPTO') || 
+                    mensaje.includes('COMPROMETID') ||
+                    mensaje.includes('INVÁLIDO') ||
+                    mensaje.includes('ERROR') ||
+                    mensaje.includes('DETECTADA')) {
+                    fichajesCorruptosIntegridad++;
+                } else {
+                    fichajesValidosIntegridad++;
+                }
+            });
+            
+            console.log(`✅ Fichajes válidos: ${fichajesValidosIntegridad}, ⚠️ Fichajes corruptos: ${fichajesCorruptosIntegridad}`);
         }
+    }
+}
 
         // Obtener los fichajes de la página actual
         const url = `${API_BASE_URL}/verificarIntegridadFichajes?departamento=${encodeURIComponent(departamento)}&pagina=${pagina}&elementosPorPagina=${elementosPorPaginaIntegridad}`;
@@ -902,23 +939,9 @@ function mostrarTablaIntegridad(fichajes, departamento) {
         return (b.id || 0) - (a.id || 0);
     });
     
-    let corruptos = 0;
-    let validos = 0;
-    
-    fichajesOrdenados. forEach(f => {
-        const mensaje = (f.mensaje || f.estado || '').toUpperCase();
-        
-        if (mensaje.includes('INCONSISTENCIA') || 
-            mensaje.includes('CORRUPTO') || 
-            mensaje.  includes('COMPROMETID') ||
-            mensaje.includes('INVÁLIDO') ||
-            mensaje. includes('ERROR') ||
-            mensaje.includes('DETECTADA')) {
-            corruptos++;
-        } else {
-            validos++;
-        }
-    });
+   // ✅ USAR VARIABLES GLOBALES en lugar de contar la página actual
+    const validos = fichajesValidosIntegridad;
+    const corruptos = fichajesCorruptosIntegridad;
     
     const totalFichajesPagina = fichajesOrdenados.length; // Fichajes en esta página
     const totalFichajes = totalFichajesIntegridad; // ✅ Total global
@@ -1669,6 +1692,8 @@ let paginaActualIntegridadEdiciones = 0;
 let elementosPorPaginaIntegridadEdiciones = 5;
 let totalPaginasIntegridadEdiciones = 1;
 let totalEdicionesIntegridad = 0; // ✅ NUEVA VARIABLE GLOBAL
+let edicionesValidasIntegridad = 0; // ✅ NUEVA VARIABLE GLOBAL
+let edicionesCorruptasIntegridad = 0; // ✅ NUEVA VARIABLE GLOBAL
 
 async function verificarIntegridadEdiciones(event, pagina = 0) {
     if (event) event.preventDefault();
@@ -1708,12 +1733,42 @@ async function verificarIntegridadEdiciones(event, pagina = 0) {
         });
 
         if (responseTotal.ok) {
-            const data = await responseTotal. json();
-            totalEdicionesIntegridad = data.totalEdicionesDepartamento || 0; // ✅ CORRECTO
-            totalPaginasIntegridadEdiciones = Math. ceil(totalEdicionesIntegridad / elementosPorPaginaIntegridadEdiciones); // ✅ CAMBIAR: usar variable GLOBAL
+    const data = await responseTotal. json();
+    totalEdicionesIntegridad = data.totalEdicionesDepartamento || 0;
+    totalPaginasIntegridadEdiciones = Math.ceil(totalEdicionesIntegridad / elementosPorPaginaIntegridadEdiciones);
+    
+    console.log(`📊 Total de ediciones en ${departamento}: ${totalEdicionesIntegridad}, Total de páginas: ${totalPaginasIntegridadEdiciones}`);
+    
+    // ✅ NUEVO: Obtener TODAS las ediciones para contar válidas/corruptas
+    if (totalEdicionesIntegridad > 0) {
+        const urlTodas = `${API_BASE_URL}/verificarIntegridadEdiciones?departamento=${encodeURIComponent(departamento)}&pagina=0&elementosPorPagina=${totalEdicionesIntegridad}`;
+        const responseTodas = await fetch(urlTodas, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        
+        if (responseTodas.ok) {
+            const todasEdiciones = await responseTodas.json();
             
-            console.log(`📊 Total de ediciones en ${departamento}: ${totalEdicionesIntegridad}, Total de páginas: ${totalPaginasIntegridadEdiciones}`); // ✅ CAMBIAR: usar variable GLOBAL
+            // Contar válidas y corruptas
+            edicionesValidasIntegridad = 0;
+            edicionesCorruptasIntegridad = 0;
+            
+            todasEdiciones.forEach(e => {
+                const mensaje = (e.mensaje || e.estado || '').toUpperCase();
+                if (mensaje.includes('INCONSISTENCIA') || mensaje.includes('INVÁLIDA')) {
+                    edicionesCorruptasIntegridad++;
+                } else {
+                    edicionesValidasIntegridad++;
+                }
+            });
+            
+            console.log(`✅ Ediciones válidas: ${edicionesValidasIntegridad}, ⚠️ Ediciones corruptas: ${edicionesCorruptasIntegridad}`);
         }
+    }
+}
 
         // Obtener las ediciones de la página actual
         const url = `${API_BASE_URL}/verificarIntegridadEdiciones?departamento=${encodeURIComponent(departamento)}&pagina=${pagina}&elementosPorPagina=${elementosPorPaginaIntegridadEdiciones}`;
@@ -1798,17 +1853,10 @@ function mostrarTablaIntegridadEdiciones(ediciones, departamento) {
         return (b.id || 0) - (a.id || 0);
     });
     
-    let corruptos = 0;
-    let validos = 0;
     
-    edicionesOrdenados.forEach(e => {
-        const mensaje = (e.mensaje || e.estado || '').toUpperCase();
-        if (mensaje.includes('INCONSISTENCIA') || mensaje.includes('INVÁLIDA')) {
-            corruptos++;
-        } else {
-            validos++;
-        }
-    });
+    // ✅ USAR VARIABLES GLOBALES en lugar de contar la página actual
+    const validos = edicionesValidasIntegridad;
+    const corruptos = edicionesCorruptasIntegridad;
     
     const total = totalEdicionesIntegridad; // ✅ CAMBIAR: usar variable global en lugar de .length
     const integridadOK = corruptos === 0;
