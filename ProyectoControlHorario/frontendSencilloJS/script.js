@@ -328,15 +328,22 @@ async function listarFichajes(pagina = 0) {
     try {
         // ✅ CORREGIDO:  Obtener username del token
         const datos = obtenerDatosToken();
-        const username = datos?. username || '';
+        const username = datos?.username || '';
+        const departamento = datos?.departamento || '';
         
         if (! username) {
             mostrarRespuesta('listarResponse', '⚠️ No se pudo obtener el usuario', 'error');
             return;
         }
-        
-        // ✅ CORREGIDO: Enviar username como parámetro
-        const urlTotal = `${API_BASE_URL}/contarFichajesUsuario?username=${encodeURIComponent(username)}`;
+
+        if (! departamento) {
+            mostrarRespuesta('listarResponse', '⚠️ No se pudo obtener el departamento del usuario', 'error');
+            return;
+        }
+    
+        // ✅ CORREGIDO: Enviar username Y departamento como parámetros
+         const urlTotal = `${API_BASE_URL}/contarFichajesUsuario?username=${encodeURIComponent(username)}&departamento=${encodeURIComponent(departamento)}`;
+
         const responseTotal = await fetch(urlTotal, {
             method: 'GET',
             headers: {
