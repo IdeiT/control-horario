@@ -308,11 +308,12 @@ async function fichar() {
 
 
 // ============================================
-// FUNCIÓN:   LISTAR FICHAJES DEL USUARIO (CON PAGINACIÓN)
+// FUNCIÓN:     LISTAR FICHAJES DEL USUARIO (CON PAGINACIÓN)
 // ============================================
 let paginaActual = 0;
 let elementosPorPagina = 5;
 let totalPaginasFichajes = 1;
+let totalFichajesUsuario = 0; // ✅ NUEVA VARIABLE GLOBAL
 
 async function listarFichajes(pagina = 0) {
     const authToken = localStorage.getItem('authToken');
@@ -326,38 +327,37 @@ async function listarFichajes(pagina = 0) {
     paginaActual = pagina;
 
     try {
-        // ✅ CORREGIDO:  Obtener username del token
+        // ✅ CORREGIDO:    Obtener username Y departamento del token
         const datos = obtenerDatosToken();
         const username = datos?.username || '';
         const departamento = datos?.departamento || '';
         
-        if (! username) {
+        if (!username) {
             mostrarRespuesta('listarResponse', '⚠️ No se pudo obtener el usuario', 'error');
             return;
         }
-
-        if (! departamento) {
+        
+        if (!departamento) {
             mostrarRespuesta('listarResponse', '⚠️ No se pudo obtener el departamento del usuario', 'error');
             return;
         }
-    
-        // ✅ CORREGIDO: Enviar username Y departamento como parámetros
-         const urlTotal = `${API_BASE_URL}/contarFichajesUsuario?username=${encodeURIComponent(username)}&departamento=${encodeURIComponent(departamento)}`;
-
+        
+        // ✅ CORREGIDO:  Enviar username Y departamento como parámetros
+        const urlTotal = `${API_BASE_URL}/contarFichajesUsuario? username=${encodeURIComponent(username)}&departamento=${encodeURIComponent(departamento)}`;
         const responseTotal = await fetch(urlTotal, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${authToken}`
-        }
-    });
+            }
+        });
 
-    if (responseTotal.ok) {
-        const data = await responseTotal.json();
-        const totalFichajes = data.totalFichajesUsuario || 0;
-        totalPaginasFichajes = Math.ceil(totalFichajes / elementosPorPagina);
-        
-        console.log(`📊 Total de fichajes del usuario ${username}: ${totalFichajes}, Total de páginas: ${totalPaginasFichajes}`);
-    }
+        if (responseTotal.ok) {
+            const data = await responseTotal.json();
+            totalFichajesUsuario = data.totalFichajesUsuario || 0; // ✅ GUARDAR EN GLOBAL
+            totalPaginasFichajes = Math.ceil(totalFichajesUsuario / elementosPorPagina);
+            
+            console.log(`📊 Total de fichajes del usuario ${username} en ${departamento}:  ${totalFichajesUsuario}, Total de páginas: ${totalPaginasFichajes}`);
+        }
 
         // Obtener los fichajes de la página actual
         const url = `${API_BASE_URL}/listarFichajesUsuario?pagina=${pagina}&elementosPorPagina=${elementosPorPagina}`;
@@ -379,11 +379,11 @@ async function listarFichajes(pagina = 0) {
                 document.getElementById('paginacionControles').style.display = 'none';
             } else if (fichajes.length === 0 && pagina > 0) {
                 // Página fuera de rango, volver a la última válida
-                console.warn(`⚠️ Página ${pagina} no existe.   Volviendo a la última página`);
+                console.warn(`⚠️ Página ${pagina} no existe.    Volviendo a la última página`);
                 listarFichajes(totalPaginasFichajes - 1);
             } else {
-                // ✅ Hay datos:   mostrar tabla
-                mostrarRespuesta('listarResponse', `✅ Mostrando fichajes de la página ${pagina + 1} de ${totalPaginasFichajes}`, 'success');
+                // ✅ Hay datos:    mostrar tabla
+                mostrarRespuesta('listarResponse', `✅ Página ${pagina + 1} de ${totalPaginasFichajes} | Total de fichajes: ${totalFichajesUsuario}`, 'success');
                 mostrarTablaFichajesConEditar(fichajes);
                 
                 // Actualizar controles
@@ -397,7 +397,7 @@ async function listarFichajes(pagina = 0) {
             }
         }
     } catch (error) {
-        mostrarRespuesta('listarResponse', '❌ Error de conexión:   ' + error.message, 'error');
+        mostrarRespuesta('listarResponse', '❌ Error de conexión:    ' + error.message, 'error');
     }
 }
 
