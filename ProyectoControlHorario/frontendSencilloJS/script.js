@@ -546,11 +546,12 @@ async function solicitarEdicion(event) {
 }
 
 // ============================================
-// FUNCIÓN:  LISTAR SOLICITUDES PENDIENTES (CON PAGINACIÓN)
+// FUNCIÓN:   LISTAR SOLICITUDES PENDIENTES (CON PAGINACIÓN)
 // ============================================
 let paginaActualSolicitudes = 0;
 let elementosPorPaginaSolicitudes = 5;
 let totalPaginasSolicitudes = 1;
+let totalSolicitudesUsuario = 0; // ✅ NUEVA VARIABLE GLOBAL
 
 async function listarSolicitudesPendientes(pagina = 0) {
     const authToken = localStorage.getItem('authToken');
@@ -566,7 +567,7 @@ async function listarSolicitudesPendientes(pagina = 0) {
     try {    
         // Obtener departamento del token del usuario autenticado
         const datos = obtenerDatosToken();
-        const departamento = datos?.departamento || '';
+        const departamento = datos?. departamento || '';
 
         if (!departamento) {
             mostrarRespuesta('solicitudesResponse', '⚠️ No se pudo obtener el departamento del usuario', 'error');
@@ -584,10 +585,10 @@ async function listarSolicitudesPendientes(pagina = 0) {
 
         if (responseTotal.ok) {
             const data = await responseTotal.json();
-            const totalSolicitudes = data.totalSolicitudesDepartamento || 0;
-            totalPaginasSolicitudes = Math. ceil(totalSolicitudes / elementosPorPaginaSolicitudes);
+            totalSolicitudesUsuario = data.totalSolicitudesDepartamento || 0; // ✅ GUARDAR EN GLOBAL
+            totalPaginasSolicitudes = Math.ceil(totalSolicitudesUsuario / elementosPorPaginaSolicitudes);
             
-            console.log(`📊 Total de solicitudes: ${totalSolicitudes}, Total de páginas: ${totalPaginasSolicitudes}`);
+            console.log(`📊 Total de solicitudes: ${totalSolicitudesUsuario}, Total de páginas: ${totalPaginasSolicitudes}`);
         }
 
         // Obtener las solicitudes de la página actual
@@ -615,14 +616,14 @@ async function listarSolicitudesPendientes(pagina = 0) {
                 }
             } else if (solicitudes.length === 0 && pagina > 0) {
                 // Página fuera de rango, volver a la última válida
-                console.warn(`⚠️ Página ${pagina} no existe.  Volviendo a la última página`);
+                console.warn(`⚠️ Página ${pagina} no existe.   Volviendo a la última página`);
                 listarSolicitudesPendientes(totalPaginasSolicitudes - 1);
             } else {
-                // ✅ Hay datos:  mostrar tabla
+                // ✅ Hay datos:   mostrar tabla
                 mostrarSolicitudes(solicitudes);
                 
                 // Actualizar controles
-                actualizarControlesPaginacionSolicitudes(solicitudes.length);
+                actualizarControlesPaginacionSolicitudes(solicitudes. length);
             }
         } else {
             const error = await response.text();
@@ -633,7 +634,7 @@ async function listarSolicitudesPendientes(pagina = 0) {
         }
     } catch (error) {
         console.error('Error al listar solicitudes:', error);
-        mostrarRespuesta('solicitudesResponse', '❌ Error de conexión:  ' + error.message, 'error');
+        mostrarRespuesta('solicitudesResponse', '❌ Error de conexión:   ' + error.message, 'error');
     }
 }
 
@@ -641,30 +642,36 @@ async function listarSolicitudesPendientes(pagina = 0) {
 // FUNCIÓN:  MOSTRAR SOLICITUDES EN TABLA
 // ============================================
 function mostrarSolicitudes(solicitudes) {
-    const container = document.getElementById('solicitudesContainer');
+    const container = document. getElementById('solicitudesContainer');
     
-    if (! container) return;
+    if (!container) return;
     
-    if (! solicitudes || solicitudes.length === 0) {
-        container. innerHTML = `
-            <p style="text-align: center; color: #666; padding: 20px;">
+    if (!solicitudes || solicitudes.length === 0) {
+        container.innerHTML = `
+            <p style="text-align: center; color:  #666; padding: 20px;">
                 No hay solicitudes en este momento.
             </p>
         `;
         return;
     }
     
+    // ✅ NUEVO:  Mostrar total de solicitudes
     let tableHTML = `
-        <table style="width: 100%; border-collapse: collapse; margin-top:  20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <div style="background: #e7f3ff; border: 2px solid #2196F3; border-radius: 8px; padding: 15px; margin-bottom: 20px; text-align: center;">
+            <span style="font-size: 1.1em; color: #1976D2; font-weight:  600;">
+                📊 Total de solicitudes: ${totalSolicitudesUsuario}
+            </span>
+        </div>
+        <table style="width:  100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
             <thead>
-                <tr style="background:  #5e72e4; color: white;">
-                    <th style="padding: 12px; text-align: left; border:  1px solid #ddd;">ID Solicitud</th>
+                <tr style="background: #5e72e4; color: white;">
+                    <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">ID Solicitud</th>
                     <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Usuario</th>
-                    <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Instante Original</th>
+                    <th style="padding: 12px; text-align: left; border:  1px solid #ddd;">Instante Original</th>
                     <th style="padding: 12px; text-align: left; border:  1px solid #ddd;">Nuevo Instante</th>
                     <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Tipo</th>
                     <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Estado</th>
-                    <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Acción</th>
+                    <th style="padding: 12px; text-align: left; border:  1px solid #ddd;">Acción</th>
                 </tr>
             </thead>
             <tbody>
@@ -681,12 +688,12 @@ function mostrarSolicitudes(solicitudes) {
             estadoHTML = '<span style="color: #28a745; font-weight: bold;">✅ Aprobada</span>';
             accionHTML = '<span style="color: #28a745;">✅ Aprobada</span>';
         } else if (estadoAprobado === 'RECHAZADO') {
-            estadoHTML = '<span style="color: #dc3545; font-weight: bold;">❌ Rechazada</span>';
+            estadoHTML = '<span style="color:  #dc3545; font-weight: bold;">❌ Rechazada</span>';
             accionHTML = '<span style="color: #dc3545;">❌ Rechazada</span>';
         } else if (estadoAprobado === 'PENDIENTE') {
             estadoHTML = '<span style="color: #ff9800; font-weight: bold;">⏳ Pendiente</span>';
             accionHTML = `
-                <div style="display:  flex; gap: 8px; flex-wrap: wrap;">
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                     <button class="btn btn-success btn-sm" onclick="aprobarSolicitud(${solicitud.id})" style="flex: 1; min-width: 80px;">
                         ✅ Aprobar
                     </button>
@@ -703,10 +710,10 @@ function mostrarSolicitudes(solicitudes) {
         tableHTML += `
             <tr style="background: ${bgColor};">
                 <td style="padding:  10px; border: 1px solid #ddd;"><strong>${solicitud.id}</strong></td>
-                <td style="padding: 10px; border: 1px solid #ddd;">${solicitud.username || 'N/A'}</td>
+                <td style="padding: 10px; border:  1px solid #ddd;">${solicitud.username || 'N/A'}</td>
                 <td style="padding: 10px; border: 1px solid #ddd; color: #dc3545; text-decoration: line-through;">${instanteOriginal}</td>
                 <td style="padding: 10px; border: 1px solid #ddd; color: #007bff; font-weight: 500;">${nuevoInstante}</td>
-                <td style="padding: 10px; border: 1px solid #ddd;"><span style="background: #e3f2fd; padding: 4px 8px; border-radius: 4px;">${solicitud.tipo || 'N/A'}</span></td>
+                <td style="padding: 10px; border:  1px solid #ddd;"><span style="background: #e3f2fd; padding: 4px 8px; border-radius: 4px;">${solicitud.tipo || 'N/A'}</span></td>
                 <td style="padding: 10px; border: 1px solid #ddd;">${estadoHTML}</td>
                 <td style="padding: 10px; border: 1px solid #ddd;">${accionHTML}</td>
             </tr>
