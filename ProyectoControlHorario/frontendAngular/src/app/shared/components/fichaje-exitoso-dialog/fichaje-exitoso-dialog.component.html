@@ -1,0 +1,53 @@
+<div class="dialog-container">
+  <div class="success-icon">
+    <mat-icon>check_circle</mat-icon>
+  </div>
+  
+  <h2 mat-dialog-title class="dialog-title">🎉 FICHAJE REGISTRADO</h2>
+  
+  <mat-dialog-content class="dialog-content">
+    <div class="info-grid">
+      <div class="info-item">
+        <span class="info-label">Usuario:</span>
+        <span class="info-value">{{ data.usuario }}</span>
+      </div>
+      
+      <div class="info-item">
+        <span class="info-label">Departamento:</span>
+        <span class="info-value">{{ data.departamento }}</span>
+      </div>
+      
+      <div class="info-item">
+        <span class="info-label">Fecha:</span>
+        <span class="info-value">{{ data.fecha }}</span>
+      </div>
+      
+      <div class="info-item">
+        <span class="info-label">Hora:</span>
+        <span class="info-value">{{ data.hora }}</span>
+      </div>
+      
+      <div class="info-item tipo-highlight">
+        <span class="info-label">Tipo:</span>
+        <span class="info-value tipo-badge" [class.entrada]="data.tipo === 'ENTRADA'" [class.salida]="data.tipo === 'SALIDA'">
+          {{ data.tipo }}
+        </span>
+      </div>
+      
+      <div class="info-item status-highlight">
+        <span class="info-label">Estado:</span>
+        <span class="info-value">Guardado en blockchain ✓</span>
+      </div>
+    </div>
+  </mat-dialog-content>
+  
+  <mat-dialog-actions align="center">
+    <button mat-raised-button color="primary" (click)="cerrar()" class="close-button">
+      Aceptar
+    </button>
+  </mat-dialog-actions>
+  
+  <div class="auto-close-message">
+    Este mensaje se cerrará automáticamente en 3 segundos
+  </div>
+</div>

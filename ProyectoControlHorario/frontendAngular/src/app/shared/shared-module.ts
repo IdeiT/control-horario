@@ -15,12 +15,18 @@ import { MatTableModule } from '@angular/material/table';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialogModule } from '@angular/material/dialog';
 
 // reCAPTCHA
 import { NgxCaptchaModule } from 'ngx-captcha';
 
 // Pipes
 import { FechaLocalPipe } from './pipes/fecha-local.pipe';
+
+// Components
+import { FichajeExitosoDialogComponent } from './components/fichaje-exitoso-dialog/fichaje-exitoso-dialog.component';
+import { DepartamentoExitosoDialogComponent } from './components/departamento-exitoso-dialog/departamento-exitoso-dialog.component';
+import { UsuarioExitosoDialogComponent } from './components/usuario-exitoso-dialog/usuario-exitoso-dialog.component';
 
 const materialModules = [
   MatButtonModule,
@@ -33,12 +39,16 @@ const materialModules = [
   MatTableModule,
   MatChipsModule,
   MatProgressSpinnerModule,
-  MatTooltipModule
+  MatTooltipModule,
+  MatDialogModule
 ];
 
 @NgModule({
   declarations: [
-    FechaLocalPipe
+    FechaLocalPipe,
+    FichajeExitosoDialogComponent,
+    DepartamentoExitosoDialogComponent,
+    UsuarioExitosoDialogComponent
   ],
   imports: [
     CommonModule,

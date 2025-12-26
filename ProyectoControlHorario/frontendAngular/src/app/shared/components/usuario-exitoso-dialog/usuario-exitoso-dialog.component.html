@@ -1,0 +1,39 @@
+<div class="dialog-container">
+  <div class="dialog-header">
+    <mat-icon>person_add</mat-icon>
+    <h2>USUARIO CREADO EXITOSAMENTE</h2>
+  </div>
+
+  <mat-dialog-content class="dialog-content">
+    <div class="info-grid">
+      <div class="info-row">
+        <span class="info-label">Usuario:</span>
+        <span class="info-value">{{ data.username }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Rol:</span>
+        <span class="info-value rol" [class.admin]="data.rol === 'Administrador'" 
+                                     [class.supervisor]="data.rol === 'Supervisor'"
+                                     [class.auditor]="data.rol === 'Auditor'"
+                                     [class.empleado]="data.rol === 'Empleado'">
+          {{ data.rol }}
+        </span>
+      </div>
+      <div class="info-row" *ngIf="data.departamento">
+        <span class="info-label">Departamento:</span>
+        <span class="info-value departamento">{{ data.departamento }}</span>
+      </div>
+    </div>
+
+    <div class="success-message">
+      <mat-icon class="success-icon">check_circle</mat-icon>
+      <span>Operación completada exitosamente</span>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="center">
+    <button mat-raised-button color="primary" (click)="cerrar()" class="btn-cerrar">
+      Cerrar
+    </button>
+  </mat-dialog-actions>
+</div>

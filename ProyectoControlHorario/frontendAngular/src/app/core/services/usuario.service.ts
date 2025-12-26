@@ -12,15 +12,15 @@ export class UsuarioService {
 
   constructor(private http: HttpClient) { }
 
-  crearUsuario(usuario: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/general/registro`, usuario);
+  crearUsuario(usuario: Usuario): Observable<{ msg: string }> {
+    return this.http.post<{ msg: string }>(`${this.apiUrl}/general/registro`, usuario);
   }
 
-  cambiarPassword(data: { username: string, nuevaPassword: string }): Observable<any> {
-    return this.http.post(`${this.apiUrl}/general/cambiarPassword`, data);
+  cambiarPassword(data: { username: string, nuevaPassword: string }): Observable<{ msg: string }> {
+    return this.http.post<{ msg: string }>(`${this.apiUrl}/general/cambiarPassword`, data);
   }
 
-  listarUsuarios(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/general/listarUsuarios`);
+  listarUsuarios(): Observable<Usuario[]> {
+    return this.http.get<Usuario[]>(`${this.apiUrl}/general/listarUsuarios`);
   }
 }

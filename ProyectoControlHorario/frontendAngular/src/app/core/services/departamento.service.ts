@@ -16,7 +16,7 @@ export class DepartamentoService {
     return this.http.get<string[]>(`${this.apiUrl}/general/listarDepartamentos`);
   }
 
-  crearDepartamento(nombreDepartamento: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/general/crearDepartamento?nombreDepartamento=${encodeURIComponent(nombreDepartamento)}`, {});
+  crearDepartamento(nombreDepartamento: string): Observable<{ nombre: string; msg: string }> {
+    return this.http.post<{ nombre: string; msg: string }>(`${this.apiUrl}/general/crearDepartamento?nombreDepartamento=${encodeURIComponent(nombreDepartamento)}`, {});
   }
 }

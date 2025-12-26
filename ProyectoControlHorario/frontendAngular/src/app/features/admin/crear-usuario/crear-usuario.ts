@@ -4,6 +4,8 @@ import { UsuarioService } from '../../../core/services/usuario.service';
 import { DepartamentoService } from '../../../core/services/departamento.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Router } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
+import { UsuarioExitosoDialogComponent } from '../../../shared/components/usuario-exitoso-dialog/usuario-exitoso-dialog.component';
 
 interface Rol {
   nombre: string;
@@ -35,7 +37,8 @@ export class CrearUsuario implements OnInit {
     private usuarioService: UsuarioService,
     private departamentoService: DepartamentoService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private dialog: MatDialog
   ) {
     this.usuarioForm = this.fb.group({
       username: ['', [Validators.required, Validators.minLength(3)]],
@@ -100,9 +103,26 @@ export class CrearUsuario implements OnInit {
 
     this.usuarioService.crearUsuario(formData).subscribe({
       next: (response) => {
+        this.loading = false;
+        
+        // Preparar datos para el diálogo
+        const dialogData: any = {
+          username: formData.username,
+          rol: formData.rol
+        };
+        
+        if (formData.departamento) {
+          dialogData.departamento = formData.departamento;
+        }
+        
+        // Mostrar diálogo de éxito
+        this.dialog.open(UsuarioExitosoDialogComponent, {
+          data: dialogData,
+          width: '500px'
+        });
+        
         this.showMessage(`✅ Usuario "${formData.username}" creado exitosamente`, 'success');
         this.usuarioForm.reset();
-        this.loading = false;
       },
       error: (error) => {
         this.loading = false;

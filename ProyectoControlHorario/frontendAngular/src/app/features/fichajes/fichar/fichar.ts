@@ -2,6 +2,8 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FichajeService } from '../../../core/services/fichaje.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { UsuarioToken } from '../../../core/models/usuario.model';
+import { MatDialog } from '@angular/material/dialog';
+import { FichajeExitosoDialogComponent } from '../../../shared/components/fichaje-exitoso-dialog/fichaje-exitoso-dialog.component';
 
 @Component({
   selector: 'app-fichar',
@@ -16,11 +18,13 @@ export class Fichar implements OnInit, OnDestroy {
   message = '';
   messageType: 'success' | 'error' | '' = '';
   loading = false;
+  fichajeReciente = false; // Para evitar fichajes duplicados
   private intervalId: any;
 
   constructor(
     private fichajeService: FichajeService,
-    private authService: AuthService
+    private authService: AuthService,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
@@ -47,6 +51,10 @@ export class Fichar implements OnInit, OnDestroy {
   }
 
   fichar(): void {
+    if (this.fichajeReciente) {
+      return; // Evitar fichajes duplicados
+    }
+
     this.loading = true;
     this.message = '';
     this.messageType = '';
@@ -55,11 +63,27 @@ export class Fichar implements OnInit, OnDestroy {
       next: (response) => {
         this.loading = false;
         this.messageType = 'success';
-        this.message = response.mensaje || '✅ Fichaje registrado correctamente';
         
-        if (response.tipo) {
-          this.message += ` (${response.tipo})`;
-        }
+        // Deshabilitar botón temporalmente
+        this.fichajeReciente = true;
+        setTimeout(() => {
+          this.fichajeReciente = false;
+        }, 5000); // 5 segundos
+        
+        // Mostrar diálogo de éxito
+        const ahora = new Date();
+        this.dialog.open(FichajeExitosoDialogComponent, {
+          width: '500px',
+          disableClose: true,
+          data: {
+            usuario: this.currentUser?.username || '',
+            departamento: this.currentUser?.departamento || 'N/A',
+            fecha: ahora.toLocaleDateString('es-ES'),
+            hora: ahora.toLocaleTimeString('es-ES'),
+            tipo: response.tipo || 'Fichaje',
+            mensaje: response.mensaje || '✅ Fichaje registrado correctamente'
+          }
+        });
       },
       error: (error) => {
         this.loading = false;

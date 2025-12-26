@@ -1,0 +1,138 @@
+.dialog-container {
+  padding: 0;
+  overflow: hidden;
+}
+
+.dialog-header {
+  background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%);
+  color: white;
+  padding: 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.dialog-header mat-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  animation: scaleIn 0.4s ease-out;
+}
+
+.dialog-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.dialog-content {
+  padding: 24px !important;
+}
+
+.info-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.info-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  border-left: 4px solid #9C27B0;
+}
+
+.info-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  font-size: 16px;
+  color: #212121;
+  font-weight: 500;
+}
+
+.info-value.rol {
+  padding: 6px 12px;
+  border-radius: 6px;
+  display: inline-block;
+  font-weight: 600;
+  text-align: center;
+}
+
+.info-value.rol.admin {
+  background-color: #FFE0B2;
+  color: #E65100;
+}
+
+.info-value.rol.supervisor {
+  background-color: #C5CAE9;
+  color: #1A237E;
+}
+
+.info-value.rol.auditor {
+  background-color: #B2DFDB;
+  color: #004D40;
+}
+
+.info-value.rol.empleado {
+  background-color: #BBDEFB;
+  color: #0D47A1;
+}
+
+.info-value.departamento {
+  color: #7B1FA2;
+  font-weight: 600;
+}
+
+.success-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  background-color: #E8F5E9;
+  border-radius: 8px;
+  color: #2E7D32;
+  font-weight: 500;
+}
+
+.success-icon {
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+  color: #4CAF50;
+}
+
+mat-dialog-actions {
+  padding: 16px 24px !important;
+  margin: 0 !important;
+  border-top: 1px solid #e0e0e0;
+}
+
+.btn-cerrar {
+  padding: 8px 32px;
+  font-weight: 500;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

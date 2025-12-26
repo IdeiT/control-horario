@@ -3,6 +3,8 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DepartamentoService } from '../../../core/services/departamento.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Router } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
+import { DepartamentoExitosoDialogComponent } from '../../../shared/components/departamento-exitoso-dialog/departamento-exitoso-dialog.component';
 
 @Component({
   selector: 'app-crear-departamento',
@@ -22,7 +24,8 @@ export class CrearDepartamento implements OnInit {
     private fb: FormBuilder,
     private departamentoService: DepartamentoService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private dialog: MatDialog
   ) {
     this.departamentoForm = this.fb.group({
       nombreDepartamento: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50), Validators.pattern(/^[A-Za-zÀ-ÿ0-9\s]+$/)]]
@@ -59,9 +62,20 @@ export class CrearDepartamento implements OnInit {
 
     this.departamentoService.crearDepartamento(nombreDepartamento).subscribe({
       next: (response) => {
+        this.loading = false;
+        
+        // Mostrar diálogo de éxito
+        this.dialog.open(DepartamentoExitosoDialogComponent, {
+          data: {
+            nombre: nombreDepartamento,
+            baseDatos: `departamento_${nombreDepartamento.toLowerCase()}.db`,
+            estado: 'Activo y disponible para asignar usuarios'
+          },
+          width: '500px'
+        });
+        
         this.showMessage(`✅ Departamento "${nombreDepartamento}" creado exitosamente`, 'success');
         this.departamentoForm.reset();
-        this.loading = false;
         // Recargar lista de departamentos
         setTimeout(() => this.cargarDepartamentosExistentes(), 500);
       },

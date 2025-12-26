@@ -23,10 +23,11 @@
       </div>
 
       <button mat-raised-button color="primary" class="fichar-button" 
-              (click)="fichar()" [disabled]="loading">
+              (click)="fichar()" [disabled]="loading || fichajeReciente">
         <mat-spinner *ngIf="loading" diameter="24"></mat-spinner>
-        <mat-icon *ngIf="!loading">check_circle</mat-icon>
-        {{ loading ? 'Fichando...' : '✓ Fichar Ahora' }}
+        <mat-icon *ngIf="!loading && !fichajeReciente">check_circle</mat-icon>
+        <mat-icon *ngIf="!loading && fichajeReciente">done_all</mat-icon>
+        {{ loading ? 'Fichando...' : (fichajeReciente ? '✅ Fichado correctamente' : '✓ Fichar Ahora') }}
       </button>
 
       <div *ngIf="message" class="message" [class.success]="messageType === 'success'" [class.error]="messageType === 'error'">

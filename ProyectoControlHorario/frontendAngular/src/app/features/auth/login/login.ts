@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { environment } from '../../../../environments/environment';
+import { ReCaptcha2Component } from 'ngx-captcha';
 
 @Component({
   selector: 'app-login',
@@ -11,6 +12,7 @@ import { environment } from '../../../../environments/environment';
   styleUrl: './login.css',
 })
 export class Login {
+  @ViewChild(ReCaptcha2Component, { static: false }) captchaElem!: ReCaptcha2Component;
   loginForm: FormGroup;
   errorMessage = '';
   successMessage = '';
@@ -57,7 +59,10 @@ export class Login {
       error: (error) => {
         this.loading = false;
         this.errorMessage = error.error?.mensaje || '❌ Error en el login';
-        // Resetear reCAPTCHA
+        // Resetear reCAPTCHA visual y el valor del formulario
+        if (this.captchaElem) {
+          this.captchaElem.resetCaptcha();
+        }
         this.loginForm.patchValue({ recaptchaToken: '' });
       }
     });
