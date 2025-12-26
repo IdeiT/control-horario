@@ -1,0 +1,61 @@
+<nav class="navbar">
+  <div class="nav-brand">🕐 Control Horario</div>
+  <div class="nav-user">{{ nombreUsuario }}</div>
+  <button class="btn-volver" (click)="volverDashboard()">← Volver</button>
+</nav>
+
+<div class="container">
+  <div class="card">
+    <h1>🏢 Crear Nuevo Departamento</h1>
+    <p class="subtitle">Solo administradores pueden crear departamentos</p>
+    
+    <form [formGroup]="departamentoForm" (ngSubmit)="crearDepartamento()">
+      <div class="form-group">
+        <label for="nombreDepartamento">Nombre del Departamento *</label>
+        <input 
+          type="text" 
+          id="nombreDepartamento"
+          formControlName="nombreDepartamento"
+          placeholder="Ej: Marketing, Ventas, Producción" 
+          class="form-input"
+          autocomplete="off">
+        <small class="hint">El nombre debe tener entre 2 y 50 caracteres</small>
+      </div>
+      
+      <button type="submit" class="btn btn-primary" [disabled]="loading || departamentoForm.invalid">
+        🏢 {{ loading ? 'Creando...' : 'Crear Departamento' }}
+      </button>
+    </form>
+    
+    <div *ngIf="message" class="response" [class.success]="messageType === 'success'" [class.error]="messageType === 'error'">
+      {{ message }}
+    </div>
+    
+    <div class="info-box">
+      <strong>ℹ️ Información:</strong>
+      <ul>
+        <li>Al crear un departamento se generará automáticamente su base de datos</li>
+        <li>Los empleados y supervisores solo pueden pertenecer a departamentos existentes</li>
+        <li>No se pueden crear departamentos duplicados</li>
+        <li>Una vez creado, el departamento estará disponible en el formulario de registro de usuarios</li>
+        <li><strong>⏱️ El proceso puede tardar unos segundos</strong></li>
+      </ul>
+    </div>
+
+    <div class="departamentos-section">
+      <h3>📋 Departamentos Existentes</h3>
+      <button class="btn btn-secondary" (click)="cargarDepartamentosExistentes()" style="margin-bottom: 15px;">
+        🔄 Actualizar Lista
+      </button>
+      <div class="departamentos-lista">
+        <div *ngIf="departamentosExistentes.length === 0" class="no-data">
+          <p>No hay departamentos registrados</p>
+        </div>
+        <div class="departamento-badge" *ngFor="let dept of departamentosExistentes">
+          📁 {{ dept }}
+        </div>
+        <p *ngIf="departamentosExistentes.length > 0" class="total-count">Total: {{ departamentosExistentes.length }} departamento(s)</p>
+      </div>
+    </div>
+  </div>
+</div>

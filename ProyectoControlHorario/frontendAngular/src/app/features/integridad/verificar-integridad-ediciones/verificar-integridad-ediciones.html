@@ -1,0 +1,184 @@
+<nav class="navbar">
+  <div class="nav-brand">🕐 Control Horario</div>
+  <button mat-button class="back-btn" (click)="volverDashboard()">
+    <mat-icon>arrow_back</mat-icon> Volver
+  </button>
+</nav>
+
+<div class="container">
+  <mat-card class="form-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon class="title-icon">🔒</mat-icon>
+        Verificar Integridad de Ediciones
+      </mat-card-title>
+      <mat-card-subtitle>Comprueba la autenticidad de las ediciones mediante blockchain</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="integridadForm" (ngSubmit)="verificarIntegridadEdiciones()">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Departamento a Verificar</mat-label>
+          <mat-select formControlName="departamento" required>
+            <mat-option *ngFor="let dept of departamentos" [value]="dept">
+              {{ dept }}
+            </mat-option>
+          </mat-select>
+          <mat-icon matPrefix>business</mat-icon>
+          <mat-error *ngIf="integridadForm.get('departamento')?.hasError('required')">
+            Selecciona un departamento
+          </mat-error>
+          <mat-hint *ngIf="soloSuDepartamento" class="info-hint">
+            ℹ️ Solo puedes verificar la integridad de tu departamento
+          </mat-hint>
+        </mat-form-field>
+
+        <button mat-raised-button color="primary" type="submit" [disabled]="loading || integridadForm.invalid" class="full-width">
+          <mat-icon>🔍</mat-icon>
+          {{ loading ? 'Verificando...' : 'Verificar Integridad de Ediciones' }}
+        </button>
+      </form>
+
+      <div *ngIf="verificado && !loading && ediciones.length > 0" class="response success">
+        ✅ Página {{ paginaActual + 1 }} de {{ totalPaginas }} | Total de ediciones: {{ totalEdiciones }} (Válidas: {{ edicionesValidas }}, Corruptas: {{ edicionesCorruptas }})
+      </div>
+
+      <div class="message" *ngIf="message" [class.success]="messageType === 'success'" [class.error]="messageType === 'error'">
+        {{ message }}
+      </div>
+
+      <div *ngIf="loading" class="loading-container">
+        <mat-spinner diameter="50"></mat-spinner>
+        <p>Verificando integridad de ediciones...</p>
+      </div>
+
+      <div *ngIf="verificado && !loading && totalEdiciones > 0">
+        <div class="stats-cards">
+          <mat-card class="stat-card total">
+            <mat-icon>assessment</mat-icon>
+            <div>
+              <div class="stat-value">{{ totalEdiciones }}</div>
+              <div class="stat-label">Total Ediciones</div>
+            </div>
+          </mat-card>
+          <mat-card class="stat-card valid">
+            <mat-icon>check_circle</mat-icon>
+            <div>
+              <div class="stat-value">{{ edicionesValidas }}</div>
+              <div class="stat-label">Válidas</div>
+            </div>
+          </mat-card>
+          <mat-card class="stat-card corrupt">
+            <mat-icon>warning</mat-icon>
+            <div>
+              <div class="stat-value">{{ edicionesCorruptas }}</div>
+              <div class="stat-label">Corruptas</div>
+            </div>
+          </mat-card>
+        </div>
+
+        <div class="table-container">
+          <table mat-table [dataSource]="ediciones" class="ediciones-table">
+            <ng-container matColumnDef="id">
+              <th mat-header-cell *matHeaderCellDef>ID</th>
+              <td mat-cell *matCellDef="let edicion">{{ edicion.id }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="username">
+              <th mat-header-cell *matHeaderCellDef>Usuario</th>
+              <td mat-cell *matCellDef="let edicion">{{ edicion.username }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="fechaOriginal">
+              <th mat-header-cell *matHeaderCellDef>Fecha/Hora Original</th>
+              <td mat-cell *matCellDef="let edicion" style="color: #dc3545; text-decoration: line-through;">{{ edicion.fechaHora_original | fechaLocal }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="fechaEditada">
+              <th mat-header-cell *matHeaderCellDef>Fecha/Hora Editada</th>
+              <td mat-cell *matCellDef="let edicion" style="color: #007bff; font-weight: 500;">{{ edicion.fechaHora_editado | fechaLocal }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="tipo">
+              <th mat-header-cell *matHeaderCellDef>Tipo</th>
+              <td mat-cell *matCellDef="let edicion">
+                <mat-chip [color]="edicion.tipo === 'ENTRADA' ? 'primary' : 'accent'">
+                  {{ edicion.tipo }}
+                </mat-chip>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="huellaGuardada">
+              <th mat-header-cell *matHeaderCellDef>Huella Guardada</th>
+              <td mat-cell *matCellDef="let edicion" class="hash-cell"
+                  [style.background-color]="edicion.huellaGuardada === edicion.huellaCalculada ? '#d4edda' : '#f8d7da'">
+                {{ edicion.huellaGuardada?.substring(0, 16) }}...
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="huellaCalculada">
+              <th mat-header-cell *matHeaderCellDef>Huella Calculada</th>
+              <td mat-cell *matCellDef="let edicion" class="hash-cell"
+                  [style.background-color]="edicion.huellaGuardada === edicion.huellaCalculada ? '#d4edda' : '#f8d7da'">
+                {{ edicion.huellaCalculada?.substring(0, 16) }}...
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="estado">
+              <th mat-header-cell *matHeaderCellDef>Estado</th>
+              <td mat-cell *matCellDef="let edicion">
+                <mat-chip [class.chip-valid]="!esCorrupta(edicion)" [class.chip-corrupt]="esCorrupta(edicion)">
+                  {{ esCorrupta(edicion) ? '⚠️ INVÁLIDA' : '✅ Válida' }}
+                </mat-chip>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+          </table>
+        </div>
+
+        <div *ngIf="totalPaginas > 1" class="pagination-controls">
+          <button (click)="irAPagina(0)" [disabled]="paginaActual === 0" class="page-btn">&lt;&lt;</button>
+          <button (click)="irAPagina(paginaActual - 1)" [disabled]="paginaActual === 0" class="page-btn">&lt;</button>
+          
+          <select [(ngModel)]="paginaActual" (change)="cambiarPagina(paginaActual)" class="page-selector">
+            <option *ngFor="let p of generarPaginas()" [value]="p">{{ p + 1 }}</option>
+          </select>
+          
+          <button (click)="irAPagina(paginaActual + 1)" [disabled]="paginaActual >= totalPaginas - 1" class="page-btn">&gt;</button>
+          <button (click)="irAPagina(totalPaginas - 1)" [disabled]="paginaActual >= totalPaginas - 1" class="page-btn">&gt;&gt;</button>
+          
+          <span class="separator">|</span>
+          
+          <label for="filasPorPagina">Número de filas:</label>
+          <select id="filasPorPagina" [(ngModel)]="elementosPorPagina" (change)="cambiarElementosPorPagina()" class="rows-selector">
+            <option [value]="5">5</option>
+            <option [value]="10">10</option>
+            <option [value]="20">20</option>
+            <option [value]="25">25</option>
+            <option [value]="50">50</option>
+          </select>
+        </div>
+      </div>
+
+      <mat-card class="info-card">
+        <mat-card-title>
+          <mat-icon>info</mat-icon>
+          ¿Qué es la verificación de integridad de ediciones?
+        </mat-card-title>
+        <mat-card-content>
+          <p>
+            El sistema utiliza una cadena de hashes (blockchain) para garantizar que ninguna 
+            edición de fichaje haya sido modificada de forma fraudulenta. Cada edición contiene un hash 
+            que depende de la edición anterior, creando una cadena inmutable.
+          </p>
+          <ul>
+            <li>✅ <strong>Integridad OK:</strong> Todas las ediciones son auténticas</li>
+            <li>⚠️ <strong>Integridad Comprometida:</strong> Se detectaron modificaciones no autorizadas</li>
+          </ul>
+        </mat-card-content>
+      </mat-card>
+    </mat-card-content>
+  </mat-card>
+</div>

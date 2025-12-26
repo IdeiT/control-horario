@@ -1,0 +1,70 @@
+<nav class="navbar">
+  <div class="nav-brand">🕐 Control Horario</div>
+  <div class="nav-user">{{ nombreUsuario }}</div>
+  <button class="btn-volver" (click)="volverDashboard()">← Volver</button>
+</nav>
+
+<div class="container">
+  <div class="card">
+    <h1>👤 Registrar Nuevo Usuario</h1>
+    <p class="subtitle">Solo administradores pueden crear usuarios</p>
+    
+    <form [formGroup]="usuarioForm" (ngSubmit)="registrarUsuario()">
+      <div class="form-group">
+        <label for="username">Nombre de Usuario *</label>
+        <input 
+          type="text" 
+          id="username"
+          formControlName="username"
+          placeholder="Ingresa el nombre de usuario" 
+          class="form-input">
+      </div>
+      
+      <div class="form-group">
+        <label for="password">Contraseña *</label>
+        <input 
+          type="password" 
+          id="password"
+          formControlName="password"
+          placeholder="Ingresa la contraseña (mínimo 8 caracteres)" 
+          class="form-input">
+        <small class="hint">La contraseña debe tener al menos 8 caracteres</small>
+      </div>
+      
+      <div class="form-group">
+        <label for="rol">Rol *</label>
+        <select id="rol" formControlName="rol" class="form-select">
+          <option value="">Seleccionar rol</option>
+          <option *ngFor="let rol of roles" [value]="rol.nombre">{{ rol.nombre }}</option>
+        </select>
+      </div>
+      
+      <div class="form-group" *ngIf="mostrarDepartamento">
+        <label for="departamento">Departamento *</label>
+        <select id="departamento" formControlName="departamento" class="form-select">
+          <option value="">Selecciona un departamento</option>
+          <option *ngFor="let dept of departamentos" [value]="dept">{{ dept }}</option>
+        </select>
+        <small class="hint">Empleados, Supervisores y Auditores deben tener un departamento</small>
+      </div>
+      
+      <button type="submit" class="btn btn-primary" [disabled]="loading || usuarioForm.invalid">
+        {{ loading ? 'Creando...' : 'Registrar Usuario' }}
+      </button>
+    </form>
+    
+    <div *ngIf="message" class="response" [class.success]="messageType === 'success'" [class.error]="messageType === 'error'">
+      {{ message }}
+    </div>
+    
+    <div class="info-box">
+      <strong>ℹ️ Información sobre roles:</strong>
+      <ul>
+        <li><strong>Empleado:</strong> Puede fichar y solicitar ediciones</li>
+        <li><strong>Supervisor:</strong> Puede aprobar ediciones de su departamento</li>
+        <li><strong>Auditor:</strong> Pertenece a un departamento. Puede verificar integridad de fichajes y ediciones de su departamento. NO ficha</li>
+        <li><strong>Administrador:</strong> Puede crear usuarios y crear departamentos</li>
+      </ul>
+    </div>
+  </div>
+</div>

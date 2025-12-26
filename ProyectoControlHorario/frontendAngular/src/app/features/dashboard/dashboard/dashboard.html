@@ -1,0 +1,25 @@
+<nav class="navbar">
+  <div class="nav-brand">🕐 Control Horario</div>
+  <div class="nav-user" *ngIf="currentUser">{{ currentUser.username }} ({{ currentUser.rol }})</div>
+</nav>
+
+<div class="container">
+  <h1 style="text-align: center; margin-bottom: 10px;">Panel de Control</h1>
+  <p class="user-info" *ngIf="currentUser">
+    Rol: {{ currentUser.rol }}<span *ngIf="currentUser.departamento"> - Departamento: {{ currentUser.departamento }}</span>
+  </p>
+  
+  <div class="dashboard-grid">
+    <div *ngFor="let option of availableOptions" class="dashboard-card" [routerLink]="option.route">
+      <div class="icon">{{ option.emoji }}</div>
+      <h3>{{ option.title }}</h3>
+      <p>{{ option.description }}</p>
+    </div>
+    
+    <div class="dashboard-card logout-card" (click)="logout()">
+      <div class="icon">🚪</div>
+      <h3>Salir</h3>
+      <p>Cerrar sesión</p>
+    </div>
+  </div>
+</div>

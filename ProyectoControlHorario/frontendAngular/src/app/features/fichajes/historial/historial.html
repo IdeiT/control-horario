@@ -1,0 +1,141 @@
+<nav class="navbar">
+  <div class="nav-brand">🕐 Control Horario</div>
+  <button mat-button class="back-btn" routerLink="/dashboard">
+    <mat-icon>arrow_back</mat-icon> Volver
+  </button>
+</nav>
+
+<div class="container">
+  <div class="card">
+    <h1>📋 Mis Fichajes</h1>
+    <p class="subtitle">Consulta tu historial de fichajes</p>
+    
+    <button mat-raised-button color="primary" (click)="cargarFichajes()" [disabled]="loading" class="actualizar-btn">
+      🔄 Actualizar Lista
+    </button>
+    
+    <div *ngIf="!loading && fichajes.length > 0" class="response success">
+      ✅ Página {{ paginaActual + 1 }} de {{ totalPaginas }} | Total de fichajes: {{ totalFichajes }}
+    </div>
+    
+    <div *ngIf="errorMessage" class="response error">
+      {{ errorMessage }}
+    </div>
+
+    <div *ngIf="loading" class="loading-state">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p>Cargando fichajes...</p>
+    </div>
+
+    <div *ngIf="!loading && fichajes.length === 0 && !errorMessage" class="no-data">
+      <mat-icon>inbox</mat-icon>
+      <p>No hay fichajes registrados</p>
+    </div>
+
+    <div *ngIf="!loading && fichajes.length > 0" class="table-wrapper">
+      <table class="fichajes-table">
+        <thead>
+          <tr>
+            <th>Fecha y Hora</th>
+            <th>Tipo</th>
+            <th>Estado</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let fichaje of fichajes">
+            <td>
+              <div *ngIf="fichaje.aprobadoEdicion === 'APROBADO'">
+                <div style="color: #dc3545; text-decoration: line-through; font-size: 0.85em;">
+                  {{ fichaje.instanteAnterior | fechaLocal }}
+                </div>
+                <div style="color: #28a745; font-weight: bold;">
+                  {{ fichaje.nuevoInstante | fechaLocal }}
+                </div>
+              </div>
+              <div *ngIf="fichaje.aprobadoEdicion === 'PENDIENTE'">
+                <div style="color: #333; font-weight: 500;">{{ (fichaje.nuevoInstante || fichaje.instanteAnterior) | fechaLocal }}</div>
+                <div style="display: flex; align-items: center; gap: 5px; margin-top: 5px;">
+                  <span style="color: #856404; font-size: 0.9em;">→</span>
+                  <span style="color: #856404; font-weight: 600; font-size: 0.95em;">{{ fichaje.solicitudInstante | fechaLocal }}</span>
+                </div>
+              </div>
+              <div *ngIf="fichaje.aprobadoEdicion === 'RECHAZADO'">
+                {{ (fichaje.nuevoInstante || fichaje.instanteAnterior) | fechaLocal }}
+              </div>
+              <div *ngIf="!fichaje.aprobadoEdicion">
+                {{ fichaje.instanteAnterior | fechaLocal }}
+              </div>
+            </td>
+            <td>
+              <div *ngIf="fichaje.aprobadoEdicion === 'APROBADO'">
+                <div style="color: #dc3545; text-decoration: line-through; font-size: 0.85em;">
+                  {{ fichaje.tipoAnterior }}
+                </div>
+                <div style="color: #28a745; font-weight: bold;">
+                  {{ fichaje.nuevoTipo }}
+                </div>
+              </div>
+              <div *ngIf="fichaje.aprobadoEdicion === 'PENDIENTE'">
+                <div style="color: #333;">{{ fichaje.nuevoTipo || fichaje.tipoAnterior }}</div>
+                <div style="display: flex; align-items: center; gap: 5px; margin-top: 5px;">
+                  <span style="color: #856404; font-size: 0.9em;">→</span>
+                  <span style="color: #856404; font-weight: 600; font-size: 0.95em;">{{ fichaje.solicitudTipo }}</span>
+                </div>
+              </div>
+              <span *ngIf="fichaje.aprobadoEdicion !== 'APROBADO' && fichaje.aprobadoEdicion !== 'PENDIENTE'" 
+                    class="tipo-badge" 
+                    [class.entrada]="(fichaje.nuevoTipo || fichaje.tipoAnterior) === 'ENTRADA'" 
+                    [class.salida]="(fichaje.nuevoTipo || fichaje.tipoAnterior) === 'SALIDA'">
+                {{ fichaje.nuevoTipo || fichaje.tipoAnterior }}
+              </span>
+            </td>
+            <td>
+              <span class="estado-badge" [ngClass]="getEstadoClass(fichaje)">
+                {{ getEstadoTexto(fichaje) }}
+              </span>
+            </td>
+            <td>
+              <button mat-raised-button color="accent" (click)="editarFichaje(fichaje)" class="btn-editar">
+                ✏️ Editar
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination-controls" *ngIf="!loading && fichajes.length > 0 && totalPaginas > 1">
+      <button (click)="irAPagina(0)" [disabled]="paginaActual === 0" class="page-btn">&lt;&lt;</button>
+      <button (click)="irAPagina(paginaActual - 1)" [disabled]="paginaActual === 0" class="page-btn">&lt;</button>
+      
+      <select [(ngModel)]="paginaActual" (change)="cambiarPagina()" class="page-selector">
+        <option *ngFor="let p of generarPaginas()" [value]="p">{{ p + 1 }}</option>
+      </select>
+      
+      <button (click)="irAPagina(paginaActual + 1)" [disabled]="paginaActual >= totalPaginas - 1" class="page-btn">&gt;</button>
+      <button (click)="irAPagina(totalPaginas - 1)" [disabled]="paginaActual >= totalPaginas - 1" class="page-btn">&gt;&gt;</button>
+      
+      <span class="separator">|</span>
+      
+      <label for="filasPorPagina">Número de filas:</label>
+      <select id="filasPorPagina" [(ngModel)]="elementosPorPagina" (change)="cambiarElementosPorPagina()" class="rows-selector">
+        <option [value]="5">5</option>
+        <option [value]="10">10</option>
+        <option [value]="20">20</option>
+        <option [value]="25">25</option>
+        <option [value]="50">50</option>
+      </select>
+    </div>
+
+    <div class="info-box">
+      <strong>ℹ️ Información sobre estados:</strong>
+      <ul>
+        <li><strong>📋 Original:</strong> Fichaje sin modificaciones. Puedes solicitar una edición</li>
+        <li><strong>⏳ Pendiente:</strong> Solicitud de edición en espera de aprobación del supervisor. No puedes solicitar otra edición hasta que se resuelva</li>
+        <li><strong>❌ Rechazado:</strong> Solicitud de edición denegada por el supervisor. Puedes solicitar una nueva edición</li>
+        <li><strong>✏️ Editado:</strong> Edición aprobada. El valor original aparece tachado y el nuevo en verde. Puedes solicitar otra edición si es necesario</li>
+      </ul>
+    </div>
+  </div>
+</div>

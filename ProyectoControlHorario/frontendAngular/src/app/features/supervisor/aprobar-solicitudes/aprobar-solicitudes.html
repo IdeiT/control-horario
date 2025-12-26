@@ -1,0 +1,110 @@
+<nav class="navbar">
+  <div class="nav-brand">🕐 Control Horario</div>
+  <div class="nav-user">{{ nombreUsuario }}</div>
+  <button class="btn-volver" (click)="volverDashboard()">← Volver</button>
+</nav>
+
+<div class="container">
+  <div class="card">
+    <h1>✅ Aprobar Solicitudes de Edición</h1>
+    <p class="subtitle">Revisa y aprueba las solicitudes pendientes de tu departamento</p>
+    
+    <button class="btn btn-primary" (click)="cargarSolicitudes()" [disabled]="loading">
+      🔄 {{ loading ? 'Cargando...' : 'Actualizar Lista' }}
+    </button>
+    
+    <div *ngIf="!loading && solicitudes.length > 0" class="response success">
+      ✅ Página {{ paginaActual + 1 }} de {{ totalPaginas }} | Total de solicitudes: {{ totalSolicitudes }}
+    </div>
+    
+    <div *ngIf="message" class="response" [class.success]="messageType === 'success'" [class.error]="messageType === 'error'">
+      {{ message }}
+    </div>
+    
+    <div *ngIf="loading" class="loading-container">
+      <p>Cargando solicitudes...</p>
+    </div>
+
+    <div *ngIf="!loading && solicitudes.length === 0" class="empty-state">
+      <p>No hay solicitudes en este momento.</p>
+    </div>
+    
+    <div *ngIf="!loading && solicitudes.length > 0">
+      <table class="solicitudes-table">
+        <thead>
+          <tr>
+            <th>ID Solicitud</th>
+            <th>Usuario</th>
+            <th>Instante Original</th>
+            <th>Nuevo Instante</th>
+            <th>Tipo</th>
+            <th>Estado</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let solicitud of solicitudes; let i = index" [class.even]="i % 2 === 0">
+            <td><strong>{{ solicitud.id }}</strong></td>
+            <td>{{ solicitud.username || 'N/A' }}</td>
+            <td class="original-date">{{ solicitud.instante_original | fechaLocal }}</td>
+            <td class="new-date">{{ solicitud.nuevo_instante | fechaLocal }}</td>
+            <td><span class="tipo-badge">{{ solicitud.tipo || 'N/A' }}</span></td>
+            <td>
+              <span class="estado-badge" [class.aprobada]="solicitud.aprobado?.toUpperCase() === 'APROBADO'" 
+                    [class.rechazada]="solicitud.aprobado?.toUpperCase() === 'RECHAZADO'" 
+                    [class.pendiente]="!solicitud.aprobado || solicitud.aprobado?.toUpperCase() === 'PENDIENTE'">
+                <ng-container *ngIf="solicitud.aprobado?.toUpperCase() === 'APROBADO'">✅ Aprobada</ng-container>
+                <ng-container *ngIf="solicitud.aprobado?.toUpperCase() === 'RECHAZADO'">❌ Rechazada</ng-container>
+                <ng-container *ngIf="!solicitud.aprobado || solicitud.aprobado?.toUpperCase() === 'PENDIENTE'">⏳ Pendiente</ng-container>
+              </span>
+            </td>
+            <td>
+              <div class="acciones" *ngIf="!solicitud.aprobado || solicitud.aprobado?.toUpperCase() === 'PENDIENTE'">
+                <button class="btn btn-success btn-sm" (click)="aprobarSolicitud(solicitud.id)">
+                  ✅ Aprobar
+                </button>
+                <button class="btn btn-danger btn-sm" (click)="rechazarSolicitud(solicitud.id)">
+                  ❌ Rechazar
+                </button>
+              </div>
+              <span *ngIf="solicitud.aprobado?.toUpperCase() === 'APROBADO'" class="estado-texto aprobada">✅ Aprobada</span>
+              <span *ngIf="solicitud.aprobado?.toUpperCase() === 'RECHAZADO'" class="estado-texto rechazada">❌ Rechazada</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <div class="pagination-controls" *ngIf="!loading && solicitudes.length > 0 && totalPaginas > 1">
+      <button (click)="irAPagina(0)" [disabled]="paginaActual === 0" class="page-btn">&lt;&lt;</button>
+      <button (click)="irAPagina(paginaActual - 1)" [disabled]="paginaActual === 0" class="page-btn">&lt;</button>
+      
+      <select [(ngModel)]="paginaActual" (change)="cambiarPaginaDirecta()" class="page-selector">
+        <option *ngFor="let p of generarPaginas()" [value]="p">{{ p + 1 }}</option>
+      </select>
+      
+      <button (click)="irAPagina(paginaActual + 1)" [disabled]="paginaActual >= totalPaginas - 1" class="page-btn">&gt;</button>
+      <button (click)="irAPagina(totalPaginas - 1)" [disabled]="paginaActual >= totalPaginas - 1" class="page-btn">&gt;&gt;</button>
+      
+      <span class="separator">|</span>
+      
+      <label for="filasPorPagina">Número de filas:</label>
+      <select id="filasPorPagina" [(ngModel)]="elementosPorPagina" (change)="cambiarElementosPorPagina()" class="rows-selector">
+        <option [value]="5">5</option>
+        <option [value]="10">10</option>
+        <option [value]="20">20</option>
+        <option [value]="25">25</option>
+        <option [value]="50">50</option>
+      </select>
+    </div>
+    
+    <div class="info-box">
+      <strong>ℹ️ Información para Supervisores:</strong>
+      <ul>
+        <li>Solo puedes aprobar solicitudes de tu mismo departamento</li>
+        <li>Al aprobar, el fichaje se actualizará automáticamente</li>
+        <li>La cadena de hashes se recalculará para mantener la integridad</li>
+      </ul>
+    </div>
+  </div>
+</div>

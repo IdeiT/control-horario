@@ -1,0 +1,187 @@
+<nav class="navbar">
+  <div class="nav-brand">🕐 Control Horario</div>
+  <button mat-button class="back-btn" (click)="volverDashboard()">
+    <mat-icon>arrow_back</mat-icon> Volver
+  </button>
+</nav>
+
+<div class="container">
+  <mat-card class="form-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon class="title-icon">🔐</mat-icon>
+        Verificar Integridad de Fichajes
+      </mat-card-title>
+      <mat-card-subtitle>Comprueba la autenticidad de los registros mediante blockchain</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="integridadForm" (ngSubmit)="verificarIntegridad()">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Departamento a Verificar</mat-label>
+          <mat-select formControlName="departamento" required>
+            <mat-option *ngFor="let dept of departamentos" [value]="dept">
+              {{ dept }}
+            </mat-option>
+          </mat-select>
+          <mat-icon matPrefix>business</mat-icon>
+          <mat-error *ngIf="integridadForm.get('departamento')?.hasError('required')">
+            Selecciona un departamento
+          </mat-error>
+          <mat-hint *ngIf="soloSuDepartamento" class="info-hint">
+            ℹ️ Solo puedes verificar la integridad de tu departamento
+          </mat-hint>
+        </mat-form-field>
+
+        <button mat-raised-button color="primary" type="submit" [disabled]="loading || integridadForm.invalid" class="full-width">
+          <mat-icon>🔍</mat-icon>
+          {{ loading ? 'Verificando...' : 'Verificar Integridad' }}
+        </button>
+      </form>
+
+      <div *ngIf="verificado && !loading && fichajes.length > 0" class="response success">
+        ✅ Página {{ paginaActual + 1 }} de {{ totalPaginas }} | Total de fichajes: {{ totalFichajes }} (Válidos: {{ fichajesValidos }}, Corruptos: {{ fichajesCorruptos }})
+      </div>
+
+      <div class="message" *ngIf="message" [class.success]="messageType === 'success'" [class.error]="messageType === 'error'">
+        {{ message }}
+      </div>
+
+      <div *ngIf="loading" class="loading-container">
+        <mat-spinner diameter="50"></mat-spinner>
+        <p>Verificando integridad...</p>
+      </div>
+
+      <div *ngIf="verificado && !loading && totalFichajes > 0">
+        <div class="stats-cards">
+          <mat-card class="stat-card total">
+            <mat-icon>assessment</mat-icon>
+            <div>
+              <div class="stat-value">{{ totalFichajes }}</div>
+              <div class="stat-label">Total Fichajes</div>
+            </div>
+          </mat-card>
+          <mat-card class="stat-card valid">
+            <mat-icon>check_circle</mat-icon>
+            <div>
+              <div class="stat-value">{{ fichajesValidos }}</div>
+              <div class="stat-label">Válidos</div>
+            </div>
+          </mat-card>
+          <mat-card class="stat-card corrupt">
+            <mat-icon>warning</mat-icon>
+            <div>
+              <div class="stat-value">{{ fichajesCorruptos }}</div>
+              <div class="stat-label">Corruptos</div>
+            </div>
+          </mat-card>
+        </div>
+
+        <div class="table-container">
+          <table mat-table [dataSource]="fichajes" class="fichajes-table">
+            <ng-container matColumnDef="id">
+              <th mat-header-cell *matHeaderCellDef>ID</th>
+              <td mat-cell *matCellDef="let fichaje">{{ fichaje.id }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="username">
+              <th mat-header-cell *matHeaderCellDef>Usuario</th>
+              <td mat-cell *matCellDef="let fichaje">{{ fichaje.username }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="fechaOriginal">
+              <th mat-header-cell *matHeaderCellDef>Fecha/Hora Original</th>
+              <td mat-cell *matCellDef="let fichaje">{{ fichaje.fechaHora_original | fechaLocal }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="fechaEditada">
+              <th mat-header-cell *matHeaderCellDef>Fecha/Hora Editada</th>
+              <td mat-cell *matCellDef="let fichaje">
+                <span *ngIf="fichaje.fechaHora_editado" style="color: #007bff; font-weight: 500;">{{ fichaje.fechaHora_editado | fechaLocal }}</span>
+                <span *ngIf="!fichaje.fechaHora_editado" style="color: #999; font-style: italic;">Sin edición</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="tipo">
+              <th mat-header-cell *matHeaderCellDef>Tipo</th>
+              <td mat-cell *matCellDef="let fichaje">
+                <mat-chip [color]="fichaje.tipo === 'ENTRADA' ? 'primary' : 'accent'">
+                  {{ fichaje.tipo }}
+                </mat-chip>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="huellaGuardada">
+              <th mat-header-cell *matHeaderCellDef>Huella Guardada</th>
+              <td mat-cell *matCellDef="let fichaje" class="hash-cell" 
+                  [style.background-color]="fichaje.huellaGuardada === fichaje.huellaCalculada ? '#d4edda' : '#f8d7da'">
+                {{ fichaje.huellaGuardada?.substring(0, 16) }}...
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="huellaCalculada">
+              <th mat-header-cell *matHeaderCellDef>Huella Calculada</th>
+              <td mat-cell *matCellDef="let fichaje" class="hash-cell"
+                  [style.background-color]="fichaje.huellaGuardada === fichaje.huellaCalculada ? '#d4edda' : '#f8d7da'">
+                {{ fichaje.huellaCalculada?.substring(0, 16) }}...
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="estado">
+              <th mat-header-cell *matHeaderCellDef>Estado</th>
+              <td mat-cell *matCellDef="let fichaje">
+                <mat-chip [class.chip-valid]="!esCorrupto(fichaje)" [class.chip-corrupt]="esCorrupto(fichaje)">
+                  {{ esCorrupto(fichaje) ? '⚠️ CORRUPTO' : '✅ Válido' }}
+                </mat-chip>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+          </table>
+        </div>
+
+        <div *ngIf="totalPaginas > 1" class="pagination-controls">
+          <button (click)="irAPagina(0)" [disabled]="paginaActual === 0" class="page-btn">&lt;&lt;</button>
+          <button (click)="irAPagina(paginaActual - 1)" [disabled]="paginaActual === 0" class="page-btn">&lt;</button>
+          
+          <select [(ngModel)]="paginaActual" (change)="cambiarPagina(paginaActual)" class="page-selector">
+            <option *ngFor="let p of generarPaginas()" [value]="p">{{ p + 1 }}</option>
+          </select>
+          
+          <button (click)="irAPagina(paginaActual + 1)" [disabled]="paginaActual >= totalPaginas - 1" class="page-btn">&gt;</button>
+          <button (click)="irAPagina(totalPaginas - 1)" [disabled]="paginaActual >= totalPaginas - 1" class="page-btn">&gt;&gt;</button>
+          
+          <span class="separator">|</span>
+          
+          <label for="filasPorPagina">Número de filas:</label>
+          <select id="filasPorPagina" [(ngModel)]="elementosPorPagina" (change)="cambiarElementosPorPagina()" class="rows-selector">
+            <option [value]="5">5</option>
+            <option [value]="10">10</option>
+            <option [value]="20">20</option>
+            <option [value]="25">25</option>
+            <option [value]="50">50</option>
+          </select>
+        </div>
+      </div>
+
+      <mat-card class="info-card">
+        <mat-card-title>
+          <mat-icon>info</mat-icon>
+          ¿Qué es la verificación de integridad?
+        </mat-card-title>
+        <mat-card-content>
+          <p>
+            El sistema utiliza una cadena de hashes (blockchain) para garantizar que ningún 
+            fichaje haya sido modificado de forma fraudulenta. Cada fichaje contiene un hash 
+            que depende del fichaje anterior, creando una cadena inmutable.
+          </p>
+          <ul>
+            <li>✅ <strong>Integridad OK:</strong> Todos los registros son auténticos</li>
+            <li>⚠️ <strong>Integridad Comprometida:</strong> Se detectaron modificaciones no autorizadas</li>
+          </ul>
+        </mat-card-content>
+      </mat-card>
+    </mat-card-content>
+  </mat-card>
+</div>

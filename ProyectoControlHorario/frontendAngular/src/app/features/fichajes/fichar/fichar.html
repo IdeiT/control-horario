@@ -1,0 +1,48 @@
+<mat-toolbar color="primary">
+  <button mat-icon-button routerLink="/dashboard">
+    <mat-icon>arrow_back</mat-icon>
+  </button>
+  <span>⏰ Fichar</span>
+</mat-toolbar>
+
+<div class="fichar-container">
+  <mat-card class="fichar-card">
+    <mat-card-header>
+      <mat-card-title>Registra tu entrada o salida</mat-card-title>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <div class="clock-section">
+        <div class="time">{{ currentTime }}</div>
+        <div class="date">{{ currentDate }}</div>
+      </div>
+
+      <div class="user-info" *ngIf="currentUser">
+        <p><strong>Usuario:</strong> {{ currentUser.username }}</p>
+        <p *ngIf="currentUser.departamento"><strong>Departamento:</strong> {{ currentUser.departamento }}</p>
+      </div>
+
+      <button mat-raised-button color="primary" class="fichar-button" 
+              (click)="fichar()" [disabled]="loading">
+        <mat-spinner *ngIf="loading" diameter="24"></mat-spinner>
+        <mat-icon *ngIf="!loading">check_circle</mat-icon>
+        {{ loading ? 'Fichando...' : '✓ Fichar Ahora' }}
+      </button>
+
+      <div *ngIf="message" class="message" [class.success]="messageType === 'success'" [class.error]="messageType === 'error'">
+        {{ message }}
+      </div>
+
+      <mat-card class="info-card">
+        <mat-card-content>
+          <h3>ℹ️ Información:</h3>
+          <ul>
+            <li>El sistema detectará automáticamente si es entrada o salida</li>
+            <li>Cada fichaje queda registrado en la blockchain</li>
+            <li>Si necesitas corregir un fichaje, solicita una edición desde el dashboard</li>
+          </ul>
+        </mat-card-content>
+      </mat-card>
+    </mat-card-content>
+  </mat-card>
+</div>
