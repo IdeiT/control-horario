@@ -13,7 +13,7 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.List;
+// import java.util.List;
 
 /**
  * Inicializa las bases de datos SQLite leyendo los esquemas desde ficheros SQL.
@@ -36,11 +36,11 @@ public class DatabaseInitializer {
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
     // Bases de datos por departamento
-    private static final List<String> DEPARTAMENTOS = List.of(
-            "departamento_it.db",
-            "departamento_rrhh.db",
-            "departamento_finanzas.db"
-    );
+    // private static final List<String> DEPARTAMENTOS = List.of(
+    //         "departamento_it.db",
+    //         "departamento_rrhh.db",
+    //         "departamento_finanzas.db"
+    // );
 
     @PostConstruct
     public void init() {
@@ -53,10 +53,10 @@ public class DatabaseInitializer {
             // Crear base general
             createDatabaseIfNotExists(dbFolder + GENERAL_DB_NAME, "schema_general.sql");
 
-            // Crear bases de departamentos
-            for (String dbName : DEPARTAMENTOS) {
-                createDatabaseIfNotExists(dbFolder + dbName, "schema_departamento.sql");
-            }
+            // // Crear bases de departamentos
+            // for (String dbName : DEPARTAMENTOS) {
+            //     createDatabaseIfNotExists(dbFolder + dbName, "schema_departamento.sql");
+            // }
 
             insertInitialAdmin(dbFolder + GENERAL_DB_NAME);
 
@@ -125,10 +125,10 @@ public class DatabaseInitializer {
             DatabaseManager.withConnection(generalDbPath, conn -> {
                 try (Statement stmt = conn.createStatement()) {
 
-                    stmt.executeUpdate("""
-                        INSERT OR IGNORE INTO departamentos (nombre)
-                        VALUES ('IT'), ('RRHH'), ('Finanzas');
-                    """);
+                    // stmt.executeUpdate("""
+                    //     INSERT OR IGNORE INTO departamentos (nombre)
+                    //     VALUES ('IT'), ('RRHH'), ('Finanzas');
+                    // """);
 
                     stmt.executeUpdate("""
                         INSERT OR IGNORE INTO roles (nombre)
