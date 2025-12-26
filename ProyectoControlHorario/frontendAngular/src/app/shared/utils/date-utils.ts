@@ -37,7 +37,7 @@ export function formatearFechaLocal(utcDateString: string | null | undefined): s
 /**
  * Convierte una fecha/hora local del navegador a UTC+0 para enviar al backend
  * @param localDateString Fecha en formato local (ej: "2025-12-23T15:01:22" del input datetime-local)
- * @returns Fecha en formato UTC sin 'Z' para el backend (ej: "2025-12-23T18:01:22")
+ * @returns Fecha en formato UTC sin 'Z' para el backend (ej: "2025-12-23 18:01:22")
  */
 export function convertirLocalAUTC(localDateString: string): string {
   if (!localDateString) return '';
@@ -58,7 +58,8 @@ export function convertirLocalAUTC(localDateString: string): string {
     const minutos = fechaLocal.getUTCMinutes().toString().padStart(2, '0');
     const segundos = fechaLocal.getUTCSeconds().toString().padStart(2, '0');
     
-    return `${anio}-${mes}-${dia}T${horas}:${minutos}:${segundos}`;
+    // IMPORTANTE: Usar espacio en lugar de 'T' para compatibilidad con la base de datos
+    return `${anio}-${mes}-${dia} ${horas}:${minutos}:${segundos}`;
   } catch (error) {
     console.error('Error al convertir fecha a UTC:', error);
     return '';

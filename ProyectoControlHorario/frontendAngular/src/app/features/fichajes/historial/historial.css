@@ -186,6 +186,13 @@
   padding: 6px 16px;
 }
 
+.btn-editar.btn-disabled {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+  background-color: #e0e0e0 !important;
+  color: #666 !important;
+}
+
 .info-box {
   margin-top: 30px;
   padding: 20px;

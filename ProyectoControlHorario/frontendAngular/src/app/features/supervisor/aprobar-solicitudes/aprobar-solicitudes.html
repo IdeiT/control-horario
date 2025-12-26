@@ -75,7 +75,7 @@
       </table>
     </div>
     
-    <div class="pagination-controls" *ngIf="!loading && solicitudes.length > 0 && totalPaginas > 1">
+    <div class="pagination-controls" *ngIf="!loading && solicitudes.length > 0">
       <button (click)="irAPagina(0)" [disabled]="paginaActual === 0" class="page-btn">&lt;&lt;</button>
       <button (click)="irAPagina(paginaActual - 1)" [disabled]="paginaActual === 0" class="page-btn">&lt;</button>
       

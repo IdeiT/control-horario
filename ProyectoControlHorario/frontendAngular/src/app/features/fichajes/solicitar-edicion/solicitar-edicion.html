@@ -1,5 +1,5 @@
 <mat-toolbar color="primary">
-  <button mat-icon-button routerLink="/dashboard">
+  <button mat-icon-button routerLink="/fichajes/historial">
     <mat-icon>arrow_back</mat-icon>
   </button>
   <span>✏️ Solicitar Edición</span>
@@ -9,54 +9,53 @@
   <mat-card>
     <mat-card-header>
       <mat-card-title>Solicitar Edición de Fichaje</mat-card-title>
-      <mat-card-subtitle>Completa el formulario para solicitar una corrección</mat-card-subtitle>
+      <mat-card-subtitle>Solicita modificar un fichaje existente</mat-card-subtitle>
     </mat-card-header>
     
     <mat-card-content>
-      <form [formGroup]="solicitudForm" (ngSubmit)="onSubmit()">
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Selecciona el fichaje a editar</mat-label>
-          <mat-select formControlName="fichajeId">
-            <mat-option *ngFor="let fichaje of fichajes" [value]="fichaje.id">
-              {{ fichaje.fechaHora | fechaLocal }} - {{ fichaje.tipo || 'Fichaje' }}
-            </mat-option>
-          </mat-select>
-          <mat-error *ngIf="solicitudForm.get('fichajeId')?.hasError('required')">
-            Debes seleccionar un fichaje
-          </mat-error>
-        </mat-form-field>
+      <!-- Mostrar el fichaje seleccionado -->
+      <div *ngIf="fichajeSeleccionado && !loadingFichaje" class="fichaje-seleccionado">
+        <mat-icon class="fichaje-icon">assignment</mat-icon>
+        <div class="fichaje-info">
+          <div class="fichaje-label">Fichaje seleccionado:</div>
+          <div class="fichaje-texto">{{ getInstanteActual() }} ({{ getTipoActual() }})</div>
+        </div>
+      </div>
 
+      <div *ngIf="loadingFichaje" style="text-align: center; padding: 20px;">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p style="margin-top: 10px; color: #666;">Cargando fichaje...</p>
+      </div>
+
+      <form [formGroup]="solicitudForm" (ngSubmit)="onSubmit()" *ngIf="fichajeSeleccionado && !loadingFichaje">
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Nueva fecha y hora</mat-label>
+          <mat-label>Nuevo Instante (Fecha y Hora)</mat-label>
           <input matInput type="datetime-local" formControlName="nuevoFechaHora">
+          <mat-hint>ℹ️ Ingresa la fecha y hora en tu zona horaria local</mat-hint>
           <mat-error *ngIf="solicitudForm.get('nuevoFechaHora')?.hasError('required')">
             La fecha y hora son requeridas
-          </mat-error>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Motivo de la edición</mat-label>
-          <textarea matInput formControlName="motivo" rows="4" 
-                    placeholder="Explica por qué necesitas modificar este fichaje"></textarea>
-          <mat-hint>Mínimo 10 caracteres</mat-hint>
-          <mat-error *ngIf="solicitudForm.get('motivo')?.hasError('required')">
-            El motivo es requerido
-          </mat-error>
-          <mat-error *ngIf="solicitudForm.get('motivo')?.hasError('minlength')">
-            El motivo debe tener al menos 10 caracteres
           </mat-error>
         </mat-form-field>
 
         <button mat-raised-button color="primary" type="submit" class="full-width" 
                 [disabled]="loading || solicitudForm.invalid">
           <mat-spinner *ngIf="loading" diameter="20"></mat-spinner>
-          {{ loading ? 'Enviando...' : 'Enviar Solicitud' }}
+          {{ loading ? 'Enviando...' : '📤 Enviar Solicitud' }}
         </button>
 
         <div *ngIf="message" class="message" [class.success]="messageType === 'success'" [class.error]="messageType === 'error'">
           {{ message }}
         </div>
       </form>
+
+      <div class="info-box">
+        <strong>⚠️ Importante:</strong>
+        <ul>
+          <li>Tu solicitud será enviada a un supervisor de tu departamento</li>
+          <li>El supervisor debe aprobar la modificación antes de que se aplique</li>
+          <li>Puedes verificar el estado en "Ver Fichajes" (En trámite / Aprobada)</li>
+        </ul>
+      </div>
     </mat-card-content>
   </mat-card>
 </div>

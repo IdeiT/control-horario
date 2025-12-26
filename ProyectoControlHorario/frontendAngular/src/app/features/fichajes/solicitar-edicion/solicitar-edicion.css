@@ -49,6 +49,53 @@
   margin-bottom: 15px;
 }
 
+/* Estilos para el fichaje seleccionado */
+.fichaje-seleccionado {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 8px;
+  margin-bottom: 20px;
+  color: white;
+}
+
+.fichaje-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+}
+
+.fichaje-info {
+  flex: 1;
+}
+
+.fichaje-label {
+  font-size: 0.9em;
+  opacity: 0.9;
+  margin-bottom: 5px;
+}
+
+.fichaje-texto {
+  font-size: 1.3em;
+  font-weight: bold;
+}
+
+/* Estilos para la caja de información */
+.info-box {
+  margin-top: 30px;
+  padding: 15px;
+  background-color: #fff3cd;
+  border-radius: 8px;
+  border-left: 4px solid #ffc107;
+}
+
+.info-box ul {
+  margin-top: 10px;
+  padding-left: 20px;
+}
+
 .fichajes-table {
   width: 100%;
   margin-top: 20px;

@@ -111,7 +111,10 @@
             <ng-container matColumnDef="huellaGuardada">
               <th mat-header-cell *matHeaderCellDef>Huella Guardada</th>
               <td mat-cell *matCellDef="let edicion" class="hash-cell"
-                  [style.background-color]="edicion.huellaGuardada === edicion.huellaCalculada ? '#d4edda' : '#f8d7da'">
+                  [style.background-color]="edicion.huellaGuardada === edicion.huellaCalculada ? '#d4edda' : '#f8d7da'"
+                  [matTooltip]="edicion.huellaGuardada || ''"
+                  matTooltipClass="tooltip-hash"
+                  style="cursor: help;">
                 {{ edicion.huellaGuardada?.substring(0, 16) }}...
               </td>
             </ng-container>
@@ -119,7 +122,10 @@
             <ng-container matColumnDef="huellaCalculada">
               <th mat-header-cell *matHeaderCellDef>Huella Calculada</th>
               <td mat-cell *matCellDef="let edicion" class="hash-cell"
-                  [style.background-color]="edicion.huellaGuardada === edicion.huellaCalculada ? '#d4edda' : '#f8d7da'">
+                  [style.background-color]="edicion.huellaGuardada === edicion.huellaCalculada ? '#d4edda' : '#f8d7da'"
+                  [matTooltip]="edicion.huellaCalculada || ''"
+                  matTooltipClass="tooltip-hash"
+                  style="cursor: help;">
                 {{ edicion.huellaCalculada?.substring(0, 16) }}...
               </td>
             </ng-container>
@@ -138,7 +144,7 @@
           </table>
         </div>
 
-        <div *ngIf="totalPaginas > 1" class="pagination-controls">
+        <div class="pagination-controls">
           <button (click)="irAPagina(0)" [disabled]="paginaActual === 0" class="page-btn">&lt;&lt;</button>
           <button (click)="irAPagina(paginaActual - 1)" [disabled]="paginaActual === 0" class="page-btn">&lt;</button>
           

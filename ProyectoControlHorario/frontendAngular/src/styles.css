@@ -48,3 +48,13 @@ body {
   color: #c62828;
   border: 1px solid #ef5350;
 }
+
+/* Estilos para tooltips de huellas/hashes */
+.mat-mdc-tooltip.tooltip-hash {
+  font-family: 'Courier New', monospace !important;
+  font-size: 12px !important;
+  max-width: 500px !important;
+  word-break: break-all !important;
+  line-height: 1.4 !important;
+  padding: 12px !important;
+}
