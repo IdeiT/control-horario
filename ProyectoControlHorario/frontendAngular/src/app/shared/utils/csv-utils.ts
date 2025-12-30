@@ -1,7 +1,7 @@
 /**
  * Convierte un array de objetos a formato CSV
  */
-export function convertirACSV(datos: any[], columnas: { header: string; key: string; transform?: (value: any) => string }[]): string {
+export function convertirACSV(datos: any[], columnas: { header: string; key: string; transform?: (value: any, item?: any) => string }[]): string {
   if (!datos || datos.length === 0) {
     return '';
   }
@@ -12,11 +12,19 @@ export function convertirACSV(datos: any[], columnas: { header: string; key: str
   // Crear las filas de datos
   const filas = datos.map(item => {
     return columnas.map(col => {
-      let valor = item[col.key];
+      const valorOriginal = item[col.key];
+      let valor = valorOriginal;
       
-      // Aplicar transformación si existe
+      // Aplicar transformación si existe. Pasamos también el item completo para transformaciones dependientes de la fila.
       if (col.transform) {
-        valor = col.transform(valor);
+        // Algunos transform esperan sólo el valor, otros el valor y la fila; soportamos ambas formas.
+        try {
+          valor = col.transform.length >= 2 ? col.transform(valorOriginal, item) : col.transform(valorOriginal);
+        } catch (e) {
+          // En caso de error en la transformación, fallback al valor original
+          console.error('Error en transform CSV para columna', col.header, e);
+          valor = valorOriginal;
+        }
       }
       
       // Escapar comillas y envolver en comillas si contiene coma, salto de línea o comillas

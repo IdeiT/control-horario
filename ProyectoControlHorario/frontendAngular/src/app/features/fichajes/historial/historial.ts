@@ -168,9 +168,22 @@ export class Historial implements OnInit, OnDestroy {
         const todosLosFichajes = resultados.flat();
         
         // Definir columnas para el CSV
+        // Solo exportar las tres columnas que se muestran en la UI: Fecha y Hora, Tipo y Estado
         const columnas = [
-          { header: 'ID', key: 'id_fichaje' },
-          { header: 'Fecha/Hora', key: 'instanteAnterior', transform: (v: string) => formatearFechaLocal(v) },
+          { header: 'Fecha y Hora', key: 'instanteAnterior', transform: (v: string, item: any) => {
+            const aprobado = item?.aprobadoEdicion;
+            if (!aprobado) {
+              return formatearFechaLocal(v);
+            }
+            const estado = String(aprobado).toUpperCase().trim();
+            if (estado === 'PENDIENTE') {
+              return formatearFechaLocal(item?.solicitudInstante || item?.solicitud_instante || v);
+            }
+            if (estado === 'APROBADO') {
+              return formatearFechaLocal(item?.nuevoInstante || item?.nuevo_instante || v);
+            }
+            return formatearFechaLocal(v);
+          }},
           { header: 'Tipo', key: 'tipoAnterior' },
           { header: 'Estado', key: 'aprobadoEdicion', transform: (v: any) => {
             if (!v) return 'Original';
@@ -180,7 +193,6 @@ export class Historial implements OnInit, OnDestroy {
             if (estado === 'APROBADO') return 'Editado';
             return 'Original';
           }},
-          { header: 'Hash', key: 'hash' }
         ];
         
         // Convertir a CSV
