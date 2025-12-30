@@ -10,9 +10,14 @@
     <h1>📋 Mis Fichajes</h1>
     <p class="subtitle">Consulta tu historial de fichajes</p>
     
-    <button mat-raised-button color="primary" (click)="cargarFichajes()" [disabled]="loading" class="actualizar-btn">
-      🔄 Actualizar Lista
-    </button>
+    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+      <button mat-raised-button color="primary" (click)="cargarFichajes()" [disabled]="loading">
+        🔄 Actualizar Lista
+      </button>
+      <button mat-raised-button color="accent" (click)="descargarCSV()" [disabled]="loading || descargandoCSV || totalFichajes === 0">
+        <mat-icon>download</mat-icon> {{ descargandoCSV ? 'Descargando...' : 'Descargar CSV' }}
+      </button>
+    </div>
     
     <div *ngIf="!loading && fichajes.length > 0" class="response success">
       ✅ Página {{ paginaActual + 1 }} de {{ totalPaginas }} | Total de fichajes: {{ totalFichajes }}

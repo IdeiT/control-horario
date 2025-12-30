@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { FichajeService } from '../../../core/services/fichaje.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Router } from '@angular/router';
+import { convertirACSV, descargarCSV, generarNombreArchivoCSV } from '../../../shared/utils/csv-utils';
+import { formatearFechaLocal } from '../../../shared/utils/date-utils';
 
 @Component({
   selector: 'app-aprobar-solicitudes',
@@ -20,6 +22,7 @@ export class AprobarSolicitudes implements OnInit {
   messageType: 'success' | 'error' = 'success';
   departamento: string = '';
   nombreUsuario: string = '';
+  descargandoCSV: boolean = false;
 
   constructor(
     private fichajeService: FichajeService,
@@ -143,5 +146,53 @@ export class AprobarSolicitudes implements OnInit {
   cambiarElementosPorPagina(): void {
     this.paginaActual = 0;
     this.cargarSolicitudes();
+  }
+
+  descargarCSV(): void {
+    if (this.totalSolicitudes === 0) {
+      alert('⚠️ No hay solicitudes para descargar');
+      return;
+    }
+
+    this.descargandoCSV = true;
+
+    const paginasNecesarias = Math.ceil(this.totalSolicitudes / 100);
+    const solicitudesCalls: Promise<any>[] = [];
+
+    for (let i = 0; i < paginasNecesarias; i++) {
+      solicitudesCalls.push(this.fichajeService.listarSolicitudesPendientes(i, 100).toPromise());
+    }
+
+    Promise.all(solicitudesCalls)
+      .then((resultados) => {
+        const todasLasSolicitudes = resultados
+          .filter(r => r !== undefined && Array.isArray(r))
+          .flatMap((r: any) => r);
+
+        const columnas = [
+          { header: 'ID Solicitud', key: 'id' },
+          { header: 'Usuario', key: 'username' },
+          { header: 'Instante Original', key: 'instante_original', transform: (v: string) => formatearFechaLocal(v) },
+          { header: 'Nuevo Instante', key: 'nuevo_instante', transform: (v: string) => formatearFechaLocal(v) },
+          { header: 'Tipo', key: 'tipo' },
+          { header: 'Estado', key: 'aprobado', transform: (v: string) => {
+            const val = (v || '').toString().toUpperCase();
+            if (val === 'APROBADO') return 'Aprobada';
+            if (val === 'RECHAZADO') return 'Rechazada';
+            return 'Pendiente';
+          } }
+        ];
+
+        const csv = convertirACSV(todasLasSolicitudes, columnas);
+        const nombreArchivo = generarNombreArchivoCSV(`solicitudes_pendientes_${this.departamento || 'all'}`);
+        descargarCSV(csv, nombreArchivo);
+
+        this.descargandoCSV = false;
+      })
+      .catch((error) => {
+        console.error('Error al descargar CSV:', error);
+        alert('❌ Error al descargar CSV');
+        this.descargandoCSV = false;
+      });
   }
 }

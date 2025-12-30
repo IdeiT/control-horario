@@ -3,6 +3,8 @@ import { Router } from '@angular/router';
 import { FichajeService } from '../../../core/services/fichaje.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Fichaje } from '../../../core/models/fichaje.model';
+import { convertirACSV, descargarCSV, generarNombreArchivoCSV } from '../../../shared/utils/csv-utils';
+import { formatearFechaLocal } from '../../../shared/utils/date-utils';
 
 @Component({
   selector: 'app-historial',
@@ -21,6 +23,7 @@ export class Historial implements OnInit {
   elementosPorPagina: number = 5;
   totalPaginas: number = 0;
   totalFichajes: number = 0;
+  descargandoCSV: boolean = false;
 
   constructor(
     private fichajeService: FichajeService,
@@ -132,5 +135,57 @@ export class Historial implements OnInit {
     this.paginaActual = 0;
     this.totalPaginas = Math.ceil(this.totalFichajes / this.elementosPorPagina);
     this.cargarFichajes();
+  }
+
+  descargarCSV(): void {
+    this.descargandoCSV = true;
+    
+    // Calcular cuántas páginas necesitamos para obtener todos los datos
+    const paginasNecesarias = Math.ceil(this.totalFichajes / 100); // 100 registros por página
+    const solicitudes = [];
+    
+    // Crear solicitudes para todas las páginas
+    for (let i = 0; i < paginasNecesarias; i++) {
+      solicitudes.push(
+        this.fichajeService.listarFichajesUsuario(i, 100).toPromise()
+      );
+    }
+    
+    // Ejecutar todas las solicitudes en paralelo
+    Promise.all(solicitudes)
+      .then((resultados) => {
+        // Combinar todos los resultados
+        const todosLosFichajes = resultados.flat();
+        
+        // Definir columnas para el CSV
+        const columnas = [
+          { header: 'ID', key: 'id_fichaje' },
+          { header: 'Fecha/Hora', key: 'instanteAnterior', transform: (v: string) => formatearFechaLocal(v) },
+          { header: 'Tipo', key: 'tipoAnterior' },
+          { header: 'Estado', key: 'aprobadoEdicion', transform: (v: any) => {
+            if (!v) return 'Original';
+            const estado = String(v).toUpperCase().trim();
+            if (estado === 'PENDIENTE') return 'Pendiente';
+            if (estado === 'RECHAZADO') return 'Rechazado';
+            if (estado === 'APROBADO') return 'Editado';
+            return 'Original';
+          }},
+          { header: 'Hash', key: 'hash' }
+        ];
+        
+        // Convertir a CSV
+        const csv = convertirACSV(todosLosFichajes, columnas);
+        
+        // Descargar
+        const nombreArchivo = generarNombreArchivoCSV('historial_fichajes');
+        descargarCSV(csv, nombreArchivo);
+        
+        this.descargandoCSV = false;
+      })
+      .catch((error) => {
+        console.error('Error al descargar CSV:', error);
+        alert('❌ Error al descargar CSV');
+        this.descargandoCSV = false;
+      });
   }
 }

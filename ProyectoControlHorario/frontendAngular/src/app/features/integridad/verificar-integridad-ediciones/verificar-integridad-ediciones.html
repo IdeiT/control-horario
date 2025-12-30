@@ -33,10 +33,15 @@
           </mat-hint>
         </mat-form-field>
 
-        <button mat-raised-button color="primary" type="submit" [disabled]="loading || integridadForm.invalid" class="full-width">
-          <mat-icon>🔍</mat-icon>
-          {{ loading ? 'Verificando...' : 'Verificar Integridad de Ediciones' }}
-        </button>
+        <div style="display: flex; gap: 10px;">
+          <button mat-raised-button color="primary" type="submit" [disabled]="loading || integridadForm.invalid" style="flex: 1;">
+            <mat-icon>🔒</mat-icon>
+            {{ loading ? 'Verificando...' : 'Verificar Integridad de Ediciones' }}
+          </button>
+          <button mat-raised-button color="accent" type="button" (click)="descargarCSV()" [disabled]="!verificado || descargandoCSV || totalEdiciones === 0">
+            <mat-icon>download</mat-icon> {{ descargandoCSV ? 'Descargando...' : 'CSV' }}
+          </button>
+        </div>
       </form>
 
       <div *ngIf="verificado && !loading && ediciones.length > 0" class="response success">

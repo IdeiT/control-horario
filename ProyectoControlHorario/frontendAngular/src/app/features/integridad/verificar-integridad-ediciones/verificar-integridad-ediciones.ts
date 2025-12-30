@@ -4,6 +4,8 @@ import { IntegridadService } from '../../../core/services/integridad.service';
 import { DepartamentoService } from '../../../core/services/departamento.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Router } from '@angular/router';
+import { convertirACSV, descargarCSV, generarNombreArchivoCSV } from '../../../shared/utils/csv-utils';
+import { formatearFechaLocal } from '../../../shared/utils/date-utils';
 
 @Component({
   selector: 'app-verificar-integridad-ediciones',
@@ -28,6 +30,7 @@ export class VerificarIntegridadEdiciones implements OnInit {
   currentUserRole: string = '';
   currentUserDept: string = '';
   soloSuDepartamento: boolean = false;
+  descargandoCSV: boolean = false;
   displayedColumns: string[] = ['id', 'username', 'fechaOriginal', 'fechaEditada', 'tipo', 'huellaGuardada', 'huellaCalculada', 'estado'];
 
   constructor(
@@ -186,5 +189,57 @@ export class VerificarIntegridadEdiciones implements OnInit {
     this.paginaActual = 0;
     this.totalPaginas = Math.ceil(this.totalEdiciones / this.elementosPorPagina);
     this.cargarPagina();
+  }
+
+  descargarCSV(): void {
+    if (!this.verificado) {
+      alert('⚠️ Primero debes verificar la integridad');
+      return;
+    }
+    
+    this.descargandoCSV = true;
+    const departamento = this.integridadForm.value.departamento;
+    
+    const paginasNecesarias = Math.ceil(this.totalEdiciones / 100);
+    const solicitudes = [];
+    
+    for (let i = 0; i < paginasNecesarias; i++) {
+      solicitudes.push(
+        this.integridadService.verificarIntegridadEdiciones(departamento, i, 100).toPromise()
+      );
+    }
+    
+    Promise.all(solicitudes)
+      .then((resultados) => {
+        const todasLasEdiciones = resultados
+          .filter(r => r !== undefined && Array.isArray(r))
+          .flatMap((r: any) => r);
+        
+        const columnas = [
+          { header: 'ID', key: 'id' },
+          { header: 'Usuario', key: 'usuario' },
+          { header: 'Fecha/Hora Original', key: 'fechaHora_original', transform: (v: string) => formatearFechaLocal(v) },
+          { header: 'Fecha/Hora Editada', key: 'fechaHora_editado', transform: (v: string) => formatearFechaLocal(v) },
+          { header: 'Tipo', key: 'tipo' },
+          { header: 'Huella Guardada', key: 'huellaGuardada' },
+          { header: 'Huella Calculada', key: 'huellaCalculada' },
+          { header: 'Estado', key: 'mensaje', transform: (v: string) => {
+            const msg = (v || '').toUpperCase();
+            if (msg.includes('INCONSISTENCIA') || msg.includes('INVÁLIDA')) return '✗ Corrupto';
+            return '✓ Válido';
+          }}
+        ];
+        
+        const csv = convertirACSV(todasLasEdiciones, columnas);
+        const nombreArchivo = generarNombreArchivoCSV(`integridad_ediciones_${departamento}`);
+        descargarCSV(csv, nombreArchivo);
+        
+        this.descargandoCSV = false;
+      })
+      .catch((error) => {
+        console.error('Error al descargar CSV:', error);
+        alert('❌ Error al descargar CSV');
+        this.descargandoCSV = false;
+      });
   }
 }

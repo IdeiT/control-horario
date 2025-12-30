@@ -9,9 +9,14 @@
     <h1>✅ Aprobar Solicitudes de Edición</h1>
     <p class="subtitle">Revisa y aprueba las solicitudes pendientes de tu departamento</p>
     
-    <button class="btn btn-primary" (click)="cargarSolicitudes()" [disabled]="loading">
-      🔄 {{ loading ? 'Cargando...' : 'Actualizar Lista' }}
-    </button>
+    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+      <button class="btn btn-primary" (click)="cargarSolicitudes()" [disabled]="loading">
+        🔄 {{ loading ? 'Cargando...' : 'Actualizar Lista' }}
+      </button>
+      <button mat-raised-button color="accent" (click)="descargarCSV()" [disabled]="loading || descargandoCSV || totalSolicitudes === 0">
+        <mat-icon>download</mat-icon> {{ descargandoCSV ? 'Descargando...' : 'Descargar CSV' }}
+      </button>
+    </div>
     
     <div *ngIf="!loading && solicitudes.length > 0" class="response success">
       ✅ Página {{ paginaActual + 1 }} de {{ totalPaginas }} | Total de solicitudes: {{ totalSolicitudes }}
