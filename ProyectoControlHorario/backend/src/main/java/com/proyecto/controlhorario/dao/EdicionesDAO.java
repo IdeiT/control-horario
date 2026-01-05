@@ -257,21 +257,53 @@ public class EdicionesDAO {
 
 
     // Metodo para listar todas las solicitudes de edicion de un departamento
-    public List<ListarSolicitudesResponse> listarSolicitudes(String departamento, int pagina, int elementosPorPagina) {
+    public List<ListarSolicitudesResponse> listarSolicitudes(String departamento, int pagina, int elementosPorPagina, String fechaDesde, String fechaHasta) {
         String dbPath = dbFolder+"departamento_"+departamento.toLowerCase()+".db";
         List<ListarSolicitudesResponse> solicitudesList = new ArrayList<>();
 
         try {
             DatabaseManager.withConnection(dbPath, conn -> {
                 // 1 - Listar todos las solicitudes de edicion
-                String query = """ 
+                // ✅ Construir query dinámica según si hay filtros de fecha
+                StringBuilder queryBuilder = new StringBuilder(""" 
                                     SELECT solicitud_edicion.id, username, instante, nuevo_instante, solicitud_edicion.tipo, aprobado
                                     FROM solicitud_edicion LEFT JOIN fichajes ON solicitud_edicion.fichaje_id = fichajes.id
-                                    ORDER BY solicitud_edicion.id DESC LIMIT ? OFFSET ?; 
-                                """;
+                                    """);
+                
+                // ✅ Añadir filtros de fecha si existen (filtramos por instante original del fichaje)
+                boolean hasWhere = false;
+                if (fechaDesde != null && !fechaDesde.isEmpty()) {
+                    queryBuilder.append(" WHERE fichajes.instante >= ?");
+                    hasWhere = true;
+                }
+                if (fechaHasta != null && !fechaHasta.isEmpty()) {
+                    if (hasWhere) {
+                        queryBuilder.append(" AND fichajes.instante <= ?");
+                    } else {
+                        queryBuilder.append(" WHERE fichajes.instante <= ?");
+                    }
+                }
+                
+                queryBuilder.append(" ORDER BY solicitud_edicion.id DESC LIMIT ? OFFSET ?;");
+                
+                String query = queryBuilder.toString();
+                
                 try (PreparedStatement st = conn.prepareStatement(query)) {
-                    st.setInt(1, elementosPorPagina);
-                    st.setInt(2, pagina  * elementosPorPagina);
+                    int paramIndex = 1;
+                    
+                    // ✅ Establecer parámetros de fecha si existen
+                    if (fechaDesde != null && !fechaDesde.isEmpty()) {
+                        st.setString(paramIndex++, fechaDesde);
+                    }
+                    if (fechaHasta != null && !fechaHasta.isEmpty()) {
+                        // Incluir todo el día: agregar hora 23:59:59 si solo viene la fecha
+                        String fechaHastaCompleta = fechaHasta.length() == 10 ? fechaHasta + "T23:59:59" : fechaHasta;
+                        st.setString(paramIndex++, fechaHastaCompleta);
+                    }
+                    
+                    st.setInt(paramIndex++, elementosPorPagina);
+                    st.setInt(paramIndex++, pagina  * elementosPorPagina);
+                    
                     ResultSet rst = st.executeQuery();
                     while (rst.next()) {
                         solicitudesList.add(new ListarSolicitudesResponse(
@@ -295,17 +327,20 @@ public class EdicionesDAO {
 
     // La cadena de hashes se construye en orden ASC (del más antiguo al más reciente)
     // Cuando inserto un fichaje, cada huella depende de la anterior cronológicamente.
-    public List<IntegridadEdicionesResponse> verificarIntegridadEdiciones(String departamentoConsultado, int pagina, int elementosPorPagina) {
+    public List<IntegridadEdicionesResponse> verificarIntegridadEdiciones(String departamentoConsultado, int pagina, int elementosPorPagina, String fechaDesde, String fechaHasta) {
         String dbPath = dbFolder+"departamento_"+departamentoConsultado.toLowerCase()+".db";
         List<IntegridadEdicionesResponse> toret = new ArrayList<>();
         List<IntegridadEdicionesResponse> toret2 = new ArrayList<>();
         
         try {
             // ✅ IMPORTANTE: Para la verificación de integridad, necesitamos calcular la huella
-            // desde el primer fichaje, pero solo devolver los de la página solicitada. 
+            // desde el primer fichaje de TODA la base de datos (sin filtros de fecha),
+            // porque cada huella depende de la anterior. Luego filtramos por fecha.
 
             DatabaseManager.withConnection(dbPath, conn -> {
 
+                // ✅ NO aplicar filtros de fecha en la query SQL para integridad
+                // La cadena de hashes requiere todos los registros en orden
                 String sql = """ 
                                  SELECT  ediciones.id, fichaje_id, username,  ediciones.instante as instante_editado, 
                                          fichajes.instante as instante_original,  ediciones.tipo,  huella_fichaje,  ediciones.huella
@@ -332,14 +367,34 @@ public class EdicionesDAO {
 
                         String base = fichajeId + "|" + fechaHora_editado + "|" + tipo + "|" + huellaFichajeOriginal + "|" + (huellaAnterior != null ? huellaAnterior : "GENESIS");
                         String huellaCalculada = FichajesDAO.generarHash(base);
-       
-                        toret.add(new IntegridadEdicionesResponse(id, usuario, fechaHora_editado, fechaHora_original, tipo, huellaGuardada,huellaCalculada)); 
-
-                        if (!huellaCalculada.equals(huellaGuardada)) {
-                            toret.get(toret.size()-1).setMensaje("INCONSISTENCIA DETECTADA");
-                        } else {
-                            toret.get(toret.size()-1).setMensaje("Huella válida");
+                        
+                        // ✅ Filtrar por fechas DESPUÉS de calcular las huellas (en memoria, por instante original del fichaje)
+                        boolean incluir = true;
+                        if (fechaDesde != null && !fechaDesde.isEmpty() && fechaHora_original != null) {
+                            // Comparar solo la parte de fecha (YYYY-MM-DD) para incluir desde las 00:00:00
+                            String fechaRegistro = fechaHora_original.substring(0, Math.min(10, fechaHora_original.length()));
+                            if (fechaRegistro.compareTo(fechaDesde) < 0) {
+                                incluir = false;
+                            }
                         }
+                        if (fechaHasta != null && !fechaHasta.isEmpty() && fechaHora_original != null) {
+                            // Comparar solo la parte de fecha (YYYY-MM-DD) para incluir hasta las 23:59:59
+                            String fechaRegistro = fechaHora_original.substring(0, Math.min(10, fechaHora_original.length()));
+                            if (fechaRegistro.compareTo(fechaHasta) > 0) {
+                                incluir = false;
+                            }
+                        }
+                        
+                        if (incluir) {
+                            toret.add(new IntegridadEdicionesResponse(id, usuario, fechaHora_editado, fechaHora_original, tipo, huellaGuardada,huellaCalculada)); 
+
+                            if (!huellaCalculada.equals(huellaGuardada)) {
+                                toret.get(toret.size()-1).setMensaje("INCONSISTENCIA DETECTADA");
+                            } else {
+                                toret.get(toret.size()-1).setMensaje("Huella válida");
+                            }
+                        }
+                        
                         huellaAnterior = huellaCalculada;                  
                     }
                 }

@@ -16,6 +16,23 @@
     </mat-card-header>
 
     <mat-card-content>
+      <!-- ✅ Filtros de fecha para CSV -->
+      <div style="display: flex; gap: 15px; margin-bottom: 15px; align-items: center; flex-wrap: wrap;">
+        <mat-form-field appearance="outline" style="max-width: 200px;">
+          <mat-label>Desde</mat-label>
+          <input matInput type="date" [(ngModel)]="fechaDesde">
+        </mat-form-field>
+        
+        <mat-form-field appearance="outline" style="max-width: 200px;">
+          <mat-label>Hasta</mat-label>
+          <input matInput type="date" [(ngModel)]="fechaHasta">
+        </mat-form-field>
+        
+        <button mat-stroked-button color="warn" (click)="limpiarFiltros()" *ngIf="fechaDesde || fechaHasta">
+          <mat-icon>clear</mat-icon> Limpiar filtros
+        </button>
+      </div>
+      
       <form [formGroup]="integridadForm" (ngSubmit)="verificarIntegridad()">
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Departamento a Verificar</mat-label>

@@ -28,6 +28,8 @@ export class Historial implements OnInit, OnDestroy {
   totalFichajes: number = 0;
   private destroy$ = new Subject<void>();
   descargandoCSV: boolean = false;
+  fechaDesde: string = '';
+  fechaHasta: string = '';
 
   constructor(
     private fichajeService: FichajeService,
@@ -147,6 +149,11 @@ export class Historial implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  limpiarFiltros(): void {
+    this.fechaDesde = '';
+    this.fechaHasta = '';
+  }
+
   descargarCSV(): void {
     this.descargandoCSV = true;
     
@@ -157,7 +164,7 @@ export class Historial implements OnInit, OnDestroy {
     // Crear solicitudes para todas las páginas
     for (let i = 0; i < paginasNecesarias; i++) {
       solicitudes.push(
-        this.fichajeService.listarFichajesUsuario(i, 100).toPromise()
+        this.fichajeService.listarFichajesUsuario(i, 100, this.fechaDesde || undefined, this.fechaHasta || undefined).toPromise()
       );
     }
     
@@ -166,6 +173,13 @@ export class Historial implements OnInit, OnDestroy {
       .then((resultados) => {
         // Combinar todos los resultados
         const todosLosFichajes = resultados.flat();
+        
+        // Validar si hay datos después de aplicar filtros
+        if (todosLosFichajes.length === 0) {
+          alert('⚠️ No hay fichajes en el rango de fechas seleccionado');
+          this.descargandoCSV = false;
+          return;
+        }
         
         // Definir columnas para el CSV
         // Solo exportar las tres columnas que se muestran en la UI: Fecha y Hora, Tipo y Estado

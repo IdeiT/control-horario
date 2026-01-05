@@ -154,8 +154,11 @@ public class ControladorEdiciones {
 
 
     @GetMapping("/listarSolicitudes")
-    public ResponseEntity<?> listarSolicitudes(@RequestHeader("Authorization") String authHeader, @RequestParam(required = false, defaultValue = "0") int pagina,
-                                                                    @RequestParam(required = false, defaultValue = "10") int elementosPorPagina) {
+    public ResponseEntity<?> listarSolicitudes(@RequestHeader("Authorization") String authHeader, 
+                                                                    @RequestParam(required = false, defaultValue = "0") int pagina,
+                                                                    @RequestParam(required = false, defaultValue = "10") int elementosPorPagina,
+                                                                    @RequestParam(required = false) String fechaDesde,
+                                                                    @RequestParam(required = false) String fechaHasta) {
        try {
             // 1️⃣ Extraer el token (sin "Bearer ")
             String token = authHeader.replace("Bearer ", "");
@@ -167,7 +170,7 @@ public class ControladorEdiciones {
 
 
             // 3️⃣ Listar toda las solicitudes del departamento correspondiente
-            List<ListarSolicitudesResponse> response = servicio.listarSolicitudes(departamento, rol, pagina,elementosPorPagina);  
+            List<ListarSolicitudesResponse> response = servicio.listarSolicitudes(departamento, rol, pagina,elementosPorPagina, fechaDesde, fechaHasta);  
 
             // En Spring Boot, la conversión a JSON es automática gracias a Jackson
             return ResponseEntity
@@ -197,8 +200,12 @@ public class ControladorEdiciones {
     // // ✅ ENDPOINT: VERIFICAR INTEGRIDAD DE EDICIONES
     // // =============================================================
     @GetMapping("/verificarIntegridadEdiciones") // deberia recibir el numero de pagina y el numero de elementos por pagina
-    public ResponseEntity<?> verificarIntegridadEdiciones(@RequestHeader("Authorization") String authHeader, @RequestParam String departamento,@RequestParam(required = true, defaultValue = "0") int pagina,
-                                                            @RequestParam(required = true, defaultValue = "10") int elementosPorPagina) {
+    public ResponseEntity<?> verificarIntegridadEdiciones(@RequestHeader("Authorization") String authHeader, 
+                                                            @RequestParam String departamento,
+                                                            @RequestParam(required = true, defaultValue = "0") int pagina,
+                                                            @RequestParam(required = true, defaultValue = "10") int elementosPorPagina,
+                                                            @RequestParam(required = false) String fechaDesde,
+                                                            @RequestParam(required = false) String fechaHasta) {
         try {
             // 1️⃣ Extraer el token (sin "Bearer ")
             String token = authHeader.replace("Bearer ", "");
@@ -213,7 +220,7 @@ public class ControladorEdiciones {
         
 
             // 3️⃣ Llamar al servicio para comprobar integridad
-            List<IntegridadEdicionesResponse> response = servicio.comprobarIntegridadEdiciones(departamento, rol, pagina,elementosPorPagina, departamentoUsuario);
+            List<IntegridadEdicionesResponse> response = servicio.comprobarIntegridadEdiciones(departamento, rol, pagina,elementosPorPagina, departamentoUsuario, fechaDesde, fechaHasta);
         
 
             // En Spring Boot, la conversión a JSON es automática gracias a Jackson

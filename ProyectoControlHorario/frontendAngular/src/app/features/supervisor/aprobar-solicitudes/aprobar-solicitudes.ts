@@ -27,6 +27,8 @@ export class AprobarSolicitudes implements OnInit, OnDestroy {
   nombreUsuario: string = '';
   descargandoCSV: boolean = false;
   private destroy$ = new Subject<void>();
+  fechaDesde: string = '';
+  fechaHasta: string = '';
 
   constructor(
     private fichajeService: FichajeService,
@@ -161,6 +163,11 @@ export class AprobarSolicitudes implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  limpiarFiltros(): void {
+    this.fechaDesde = '';
+    this.fechaHasta = '';
+  }
+
   descargarCSV(): void {
     if (this.totalSolicitudes === 0) {
       alert('⚠️ No hay solicitudes para descargar');
@@ -173,7 +180,7 @@ export class AprobarSolicitudes implements OnInit, OnDestroy {
     const solicitudesCalls: Promise<any>[] = [];
 
     for (let i = 0; i < paginasNecesarias; i++) {
-      solicitudesCalls.push(this.fichajeService.listarSolicitudesPendientes(i, 100).toPromise());
+      solicitudesCalls.push(this.fichajeService.listarSolicitudesPendientes(i, 100, this.fechaDesde || undefined, this.fechaHasta || undefined).toPromise());
     }
 
     Promise.all(solicitudesCalls)
@@ -181,6 +188,13 @@ export class AprobarSolicitudes implements OnInit, OnDestroy {
         const todasLasSolicitudes = resultados
           .filter(r => r !== undefined && Array.isArray(r))
           .flatMap((r: any) => r);
+
+        // Validar si hay datos después de aplicar filtros
+        if (todasLasSolicitudes.length === 0) {
+          alert('⚠️ No hay solicitudes en el rango de fechas seleccionado');
+          this.descargandoCSV = false;
+          return;
+        }
 
         const columnas = [
           { header: 'ID Solicitud', key: 'id' },

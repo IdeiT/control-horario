@@ -125,7 +125,7 @@ public class FichajesDAO {
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public List<ListarFichajeUsuarioResponse> listarFichajesUsuario(String username, String departamento, int pagina, int elementosPorPagina) {
+    public List<ListarFichajeUsuarioResponse> listarFichajesUsuario(String username, String departamento, int pagina, int elementosPorPagina, String fechaDesde, String fechaHasta) {
         String dbPath = dbFolder+"departamento_"+departamento.toLowerCase()+".db";
         List<ListarFichajeUsuarioResponse> fichajesList = new ArrayList<>();
 
@@ -134,7 +134,9 @@ public class FichajesDAO {
                 // 1 - Listar todos los fichajes del usuario
                 String instante, tipo, nuevoInstante, nuevoTipo;
                 int idFichaje;
-                String query = """ 
+                
+                // ✅ Construir query dinámica según si hay filtros de fecha
+                StringBuilder queryBuilder = new StringBuilder(""" 
                                     SELECT 
                                     f.id AS id_fichaje,
                                     f.instante AS instante_original,
@@ -144,13 +146,37 @@ public class FichajesDAO {
                                 FROM fichajes f
                                 LEFT JOIN ediciones e ON f.id_edicion = e.id
                                 WHERE f.username = ?
-                                ORDER BY id_fichaje DESC
-                                LIMIT ? OFFSET ?;
-                                """;
+                                """);
+                
+                // ✅ Añadir filtros de fecha si existen
+                if (fechaDesde != null && !fechaDesde.isEmpty()) {
+                    queryBuilder.append(" AND f.instante >= ?");
+                }
+                if (fechaHasta != null && !fechaHasta.isEmpty()) {
+                    queryBuilder.append(" AND f.instante <= ?");
+                }
+                
+                queryBuilder.append(" ORDER BY id_fichaje DESC LIMIT ? OFFSET ?;");
+                
+                String query = queryBuilder.toString();
+                
                 try (PreparedStatement st = conn.prepareStatement(query)) {
-                    st.setString(1, username);
-                    st.setInt(2, elementosPorPagina);
-                    st.setInt(3, pagina * elementosPorPagina);
+                    int paramIndex = 1;
+                    st.setString(paramIndex++, username);
+                    
+                    // ✅ Establecer parámetros de fecha si existen
+                    if (fechaDesde != null && !fechaDesde.isEmpty()) {
+                        st.setString(paramIndex++, fechaDesde);
+                    }
+                    if (fechaHasta != null && !fechaHasta.isEmpty()) {
+                        // Incluir todo el día: agregar hora 23:59:59 si solo viene la fecha
+                        String fechaHastaCompleta = fechaHasta.length() == 10 ? fechaHasta + "T23:59:59" : fechaHasta;
+                        st.setString(paramIndex++, fechaHastaCompleta);
+                    }
+                    
+                    st.setInt(paramIndex++, elementosPorPagina);
+                    st.setInt(paramIndex++, pagina * elementosPorPagina);
+                    
                     ResultSet rst = st.executeQuery();
                     while (rst.next()) {
                         idFichaje = rst.getInt("id_fichaje");
@@ -199,19 +225,22 @@ public class FichajesDAO {
 
     // La cadena de hashes se construye en orden ASC (del más antiguo al más reciente)
     // Cuando inserto un fichaje, cada huella depende de la anterior cronológicamente.
-    public List<IntegridadResponse> verificarIntegridadFichajes(String departamentoConsultado, int pagina, int elementosPorPagina) {
+    public List<IntegridadResponse> verificarIntegridadFichajes(String departamentoConsultado, int pagina, int elementosPorPagina, String fechaDesde, String fechaHasta) {
         String dbPath = dbFolder+"departamento_"+departamentoConsultado.toLowerCase()+".db";
         List<IntegridadResponse> toret = new ArrayList<>();
         List<IntegridadResponse> toret2 = new ArrayList<>();
         
         try {
             // ✅ IMPORTANTE: Para la verificación de integridad, necesitamos calcular la huella
-            // desde el primer fichaje, pero solo devolver los de la página solicitada. 
+            // desde el primer fichaje de TODA la base de datos (sin filtros de fecha),
+            // porque cada huella depende de la anterior. Luego filtramos por fecha.
 
             DatabaseManager.withConnection(dbPath, conn -> {
 
+                // ✅ NO aplicar filtros de fecha en la query SQL para integridad
+                // La cadena de hashes requiere todos los registros en orden
                 String sql = "SELECT fichajes.id, username, fichajes.instante as fich_inst, ediciones.instante as edic_inst, fichajes.tipo, fichajes.huella FROM fichajes "+
-                                    "LEFT JOIN ediciones ON fichajes.id_edicion = ediciones.id ORDER BY fichajes.id ASC";  
+                                    "LEFT JOIN ediciones ON fichajes.id_edicion = ediciones.id ORDER BY fichajes.id ASC";
                                                                      // Del más antiguo al más reciente
                                                                      // Si dos fichajes tienen el mismo instante (milisegundo igual), el 
                                                                      // orden por instante podría ser inconsistente. El id autoincremental 
@@ -230,16 +259,36 @@ public class FichajesDAO {
 
                         String base = usuario + "|" + fechaHora_Original + "|" + tipo + "|" + (huellaAnterior != null ? huellaAnterior : "GENESIS");
                         String huellaCalculada = generarHash(base);
-                          
-                        // La huella Guardada en la BD debe coincidir con la huella Calculada
-                        // Si coinciden, el registro es íntegro
-                        toret.add(new IntegridadResponse(id, usuario, fechaHora_Original, fechaHora_Editada, tipo, huellaGuardada, huellaCalculada)); 
-
-                        if (!huellaCalculada.equals(huellaGuardada)) {
-                            toret.get(toret.size()-1).setMensaje("INCONSISTENCIA DETECTADA");
-                        } else {
-                            toret.get(toret.size()-1).setMensaje("Huella válida");
+                        
+                        // ✅ Filtrar por fechas DESPUÉS de calcular las huellas (en memoria)
+                        boolean incluir = true;
+                        if (fechaDesde != null && !fechaDesde.isEmpty()) {
+                            // Comparar solo la parte de fecha (YYYY-MM-DD) para incluir desde las 00:00:00
+                            String fechaRegistro = fechaHora_Original.substring(0, Math.min(10, fechaHora_Original.length()));
+                            if (fechaRegistro.compareTo(fechaDesde) < 0) {
+                                incluir = false;
+                            }
                         }
+                        if (fechaHasta != null && !fechaHasta.isEmpty()) {
+                            // Comparar solo la parte de fecha (YYYY-MM-DD) para incluir hasta las 23:59:59
+                            String fechaRegistro = fechaHora_Original.substring(0, Math.min(10, fechaHora_Original.length()));
+                            if (fechaRegistro.compareTo(fechaHasta) > 0) {
+                                incluir = false;
+                            }
+                        }
+                        
+                        if (incluir) {
+                            // La huella Guardada en la BD debe coincidir con la huella Calculada
+                            // Si coinciden, el registro es íntegro
+                            toret.add(new IntegridadResponse(id, usuario, fechaHora_Original, fechaHora_Editada, tipo, huellaGuardada, huellaCalculada)); 
+
+                            if (!huellaCalculada.equals(huellaGuardada)) {
+                                toret.get(toret.size()-1).setMensaje("INCONSISTENCIA DETECTADA");
+                            } else {
+                                toret.get(toret.size()-1).setMensaje("Huella válida");
+                            }
+                        }
+                        
                         huellaAnterior = huellaCalculada;                  
                     }
                 }

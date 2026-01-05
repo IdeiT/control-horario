@@ -35,6 +35,8 @@ export class VerificarIntegridadEdiciones implements OnInit, OnDestroy {
   descargandoCSV: boolean = false;
   displayedColumns: string[] = ['id', 'username', 'fechaOriginal', 'fechaEditada', 'tipo', 'huellaGuardada', 'huellaCalculada', 'estado'];
   private destroy$ = new Subject<void>();
+  fechaDesde: string = '';
+  fechaHasta: string = '';
 
   constructor(
     private fb: FormBuilder,
@@ -206,6 +208,11 @@ export class VerificarIntegridadEdiciones implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  limpiarFiltros(): void {
+    this.fechaDesde = '';
+    this.fechaHasta = '';
+  }
+
   descargarCSV(): void {
     if (!this.verificado) {
       alert('⚠️ Primero debes verificar la integridad');
@@ -220,7 +227,7 @@ export class VerificarIntegridadEdiciones implements OnInit, OnDestroy {
     
     for (let i = 0; i < paginasNecesarias; i++) {
       solicitudes.push(
-        this.integridadService.verificarIntegridadEdiciones(departamento, i, 100).toPromise()
+        this.integridadService.verificarIntegridadEdiciones(departamento, i, 100, this.fechaDesde || undefined, this.fechaHasta || undefined).toPromise()
       );
     }
     
@@ -229,6 +236,13 @@ export class VerificarIntegridadEdiciones implements OnInit, OnDestroy {
         const todasLasEdiciones = resultados
           .filter(r => r !== undefined && Array.isArray(r))
           .flatMap((r: any) => r);
+        
+        // Validar si hay datos después de aplicar filtros
+        if (todasLasEdiciones.length === 0) {
+          alert('⚠️ No hay ediciones en el rango de fechas seleccionado');
+          this.descargandoCSV = false;
+          return;
+        }
         
         const columnas = [
           { header: 'ID', key: 'id' },

@@ -11,11 +11,19 @@ export class IntegridadService {
 
   constructor(private http: HttpClient) { }
 
-  verificarIntegridadFichajes(departamento: string, pagina: number = 0, elementosPorPagina: number = 10): Observable<any[]> {
-    const params = new HttpParams()
+  verificarIntegridadFichajes(departamento: string, pagina: number = 0, elementosPorPagina: number = 10, fechaDesde?: string, fechaHasta?: string): Observable<any[]> {
+    let params = new HttpParams()
       .set('departamento', departamento)
       .set('pagina', pagina.toString())
       .set('elementosPorPagina', elementosPorPagina.toString());
+    
+    if (fechaDesde) {
+      params = params.set('fechaDesde', fechaDesde);
+    }
+    if (fechaHasta) {
+      params = params.set('fechaHasta', fechaHasta);
+    }
+    
     return this.http.get<any[]>(`${this.apiUrl}/verificarIntegridadFichajes`, { params });
   }
 
@@ -24,11 +32,19 @@ export class IntegridadService {
     return this.http.get<{ totalFichajesDepartamento: number }>(`${this.apiUrl}/contarFichajesTotales`, { params });
   }
 
-  verificarIntegridadEdiciones(departamento: string, pagina: number = 0, elementosPorPagina: number = 10): Observable<any[]> {
-    const params = new HttpParams()
+  verificarIntegridadEdiciones(departamento: string, pagina: number = 0, elementosPorPagina: number = 10, fechaDesde?: string, fechaHasta?: string): Observable<any[]> {
+    let params = new HttpParams()
       .set('departamento', departamento)
       .set('pagina', pagina.toString())
       .set('elementosPorPagina', elementosPorPagina.toString());
+    
+    if (fechaDesde) {
+      params = params.set('fechaDesde', fechaDesde);
+    }
+    if (fechaHasta) {
+      params = params.set('fechaHasta', fechaHasta);
+    }
+    
     return this.http.get<any[]>(`${this.apiUrl}/verificarIntegridadEdiciones`, { params });
   }
 

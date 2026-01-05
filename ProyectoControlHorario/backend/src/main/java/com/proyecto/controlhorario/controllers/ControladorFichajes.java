@@ -75,8 +75,11 @@ public class ControladorFichajes {
     // // ✅ ENDPOINT: LISTAR FICHAJES del USUARIO  ( deberia recibir el numero de pagina y el numero de elementos por pagina )
     // // =============================================================
     @GetMapping("/listarFichajesUsuario")
-    public ResponseEntity<?> listarFichajesUsuario(@RequestHeader("Authorization") String authHeader, @RequestParam(required = true, defaultValue = "0") int pagina,
-                                                   @RequestParam(required = true, defaultValue = "10") int elementosPorPagina) {
+    public ResponseEntity<?> listarFichajesUsuario(@RequestHeader("Authorization") String authHeader, 
+                                                   @RequestParam(required = true, defaultValue = "0") int pagina,
+                                                   @RequestParam(required = true, defaultValue = "10") int elementosPorPagina,
+                                                   @RequestParam(required = false) String fechaDesde,
+                                                   @RequestParam(required = false) String fechaHasta) {
        try {
             // 1️⃣ Extraer el token (sin "Bearer ")
             String token = authHeader.replace("Bearer ", "");
@@ -89,7 +92,7 @@ public class ControladorFichajes {
 
 
             // 3️⃣ Listar todos fichajes del usuario correspondiente
-            List<ListarFichajeUsuarioResponse> response = servicio.listarFichajesUsuario(username,departamento,rolUsuarioActual,pagina,elementosPorPagina);;  
+            List<ListarFichajeUsuarioResponse> response = servicio.listarFichajesUsuario(username,departamento,rolUsuarioActual,pagina,elementosPorPagina,fechaDesde,fechaHasta);;  
 
             // En Spring Boot, la conversión a JSON es automática gracias a Jackson
             return ResponseEntity
@@ -121,8 +124,12 @@ public class ControladorFichajes {
     // // ✅ ENDPOINT: VERIFICAR INTEGRIDAD DE FICHAJES
     // // =============================================================
     @GetMapping("/verificarIntegridadFichajes") // deberia recibir el numero de pagina y el numero de elementos por pagina
-    public ResponseEntity<?> verificarIntegridadFichajes(@RequestHeader("Authorization") String authHeader, @RequestParam String departamento,@RequestParam(required = true, defaultValue = "0") int pagina,
-                                                            @RequestParam(required = true, defaultValue = "10") int elementosPorPagina) {
+    public ResponseEntity<?> verificarIntegridadFichajes(@RequestHeader("Authorization") String authHeader, 
+                                                            @RequestParam String departamento,
+                                                            @RequestParam(required = true, defaultValue = "0") int pagina,
+                                                            @RequestParam(required = true, defaultValue = "10") int elementosPorPagina,
+                                                            @RequestParam(required = false) String fechaDesde,
+                                                            @RequestParam(required = false) String fechaHasta) {
         try {
             // 1️⃣ Extraer el token (sin "Bearer ")
             String token = authHeader.replace("Bearer ", "");
@@ -135,7 +142,7 @@ public class ControladorFichajes {
         
 
             // 3️⃣ Llamar al servicio para comprobar integridad
-            List<IntegridadResponse> response = servicio.comprobarIntegridadFichajes(departamento, rol, pagina,elementosPorPagina, departamentoUsuario);
+            List<IntegridadResponse> response = servicio.comprobarIntegridadFichajes(departamento, rol, pagina,elementosPorPagina, departamentoUsuario, fechaDesde, fechaHasta);
         
 
             // En Spring Boot, la conversión a JSON es automática gracias a Jackson

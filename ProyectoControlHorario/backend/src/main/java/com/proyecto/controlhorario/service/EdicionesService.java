@@ -77,7 +77,7 @@ public class EdicionesService {
     }
 
     // Nuevo método para listar solicitudes
-    public List<ListarSolicitudesResponse> listarSolicitudes(String departamento, String rol, int pagina, int elementosPorPagina) {
+    public List<ListarSolicitudesResponse> listarSolicitudes(String departamento, String rol, int pagina, int elementosPorPagina, String fechaDesde, String fechaHasta) {
 
         // Solo el rol 'supervisor' podra listar las solicitudes de edicion de fichaje, ya que es el unico que puede aprobarlas
         // El supervisor es un empleado que pertenece al mismo departamento que el fichaje
@@ -86,13 +86,13 @@ public class EdicionesService {
             throw new ForbiddenException("Solo el rol de SUPERVISOR puede listar las solicitudes de edicion de fichaje");
         }
 
-        List<ListarSolicitudesResponse> response = solicitudEdicionDAO.listarSolicitudes(departamento, pagina, elementosPorPagina);
+        List<ListarSolicitudesResponse> response = solicitudEdicionDAO.listarSolicitudes(departamento, pagina, elementosPorPagina, fechaDesde, fechaHasta);
         return response;
     }
 
     // Nuevo método para verificar integridad de ediciones
     // Cadena de hashes (similar a blockchain) para detectar manipulaciones no autorizadas en los registros de fichajes
-    public List<IntegridadEdicionesResponse> comprobarIntegridadEdiciones(String departamentoConsultado, String rolUsuarioActual, int pagina, int elementosPorPagina, String departamentoUsuario) {
+    public List<IntegridadEdicionesResponse> comprobarIntegridadEdiciones(String departamentoConsultado, String rolUsuarioActual, int pagina, int elementosPorPagina, String departamentoUsuario, String fechaDesde, String fechaHasta) {
 
         // ✅ VALIDAR QUE EL USUARIO ACTUAL SEA ADMINISTRADOR O AUDITOR O SUPERVISOR
         if (!rolUsuarioActual.equals("Administrador") && !rolUsuarioActual.equals("Auditor") && !rolUsuarioActual.equals("Supervisor")) {
@@ -104,7 +104,7 @@ public class EdicionesService {
             throw new ForbiddenException("Los auditores y supervisores solo pueden verificar la integridad de su propio departamento");
         }
 
-        return solicitudEdicionDAO.verificarIntegridadEdiciones(departamentoConsultado, pagina, elementosPorPagina);
+        return solicitudEdicionDAO.verificarIntegridadEdiciones(departamentoConsultado, pagina, elementosPorPagina, fechaDesde, fechaHasta);
     }
 
 }

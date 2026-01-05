@@ -35,10 +35,18 @@ export class FichajeService {
     return this.http.post(`${this.apiUrl}/solicitarEdicion`, data);
   }
 
-  listarSolicitudesPendientes(pagina: number = 0, elementosPorPagina: number = 10): Observable<any[]> {
-    const params = new HttpParams()
+  listarSolicitudesPendientes(pagina: number = 0, elementosPorPagina: number = 10, fechaDesde?: string, fechaHasta?: string): Observable<any[]> {
+    let params = new HttpParams()
       .set('pagina', pagina.toString())
       .set('elementosPorPagina', elementosPorPagina.toString());
+    
+    if (fechaDesde) {
+      params = params.set('fechaDesde', fechaDesde);
+    }
+    if (fechaHasta) {
+      params = params.set('fechaHasta', fechaHasta);
+    }
+    
     return this.http.get<any[]>(`${this.apiUrl}/listarSolicitudes`, { params });
   }
 
@@ -58,10 +66,18 @@ export class FichajeService {
   }
 
   // Listar fichajes del usuario con paginación
-  listarFichajesUsuario(pagina: number = 0, elementosPorPagina: number = 5): Observable<any[]> {
-    const params = new HttpParams()
+  listarFichajesUsuario(pagina: number = 0, elementosPorPagina: number = 5, fechaDesde?: string, fechaHasta?: string): Observable<any[]> {
+    let params = new HttpParams()
       .set('pagina', pagina.toString())
       .set('elementosPorPagina', elementosPorPagina.toString());
+    
+    if (fechaDesde) {
+      params = params.set('fechaDesde', fechaDesde);
+    }
+    if (fechaHasta) {
+      params = params.set('fechaHasta', fechaHasta);
+    }
+    
     return this.http.get<any[]>(`${this.apiUrl}/listarFichajesUsuario`, { params });
   }
 

@@ -9,6 +9,23 @@
     <h1>✅ Aprobar Solicitudes de Edición</h1>
     <p class="subtitle">Revisa y aprueba las solicitudes pendientes de tu departamento</p>
     
+    <!-- ✅ Filtros de fecha para CSV -->
+    <div style="display: flex; gap: 15px; margin-bottom: 15px; align-items: center; flex-wrap: wrap;">
+      <mat-form-field appearance="outline" style="max-width: 200px;">
+        <mat-label>Desde</mat-label>
+        <input matInput type="date" [(ngModel)]="fechaDesde">
+      </mat-form-field>
+      
+      <mat-form-field appearance="outline" style="max-width: 200px;">
+        <mat-label>Hasta</mat-label>
+        <input matInput type="date" [(ngModel)]="fechaHasta">
+      </mat-form-field>
+      
+      <button mat-stroked-button color="warn" (click)="limpiarFiltros()" *ngIf="fechaDesde || fechaHasta">
+        <mat-icon>clear</mat-icon> Limpiar filtros
+      </button>
+    </div>
+    
     <div style="display: flex; gap: 10px; margin-bottom: 15px;">
       <button class="btn btn-primary" (click)="cargarSolicitudes()" [disabled]="loading">
         🔄 {{ loading ? 'Cargando...' : 'Actualizar Lista' }}
